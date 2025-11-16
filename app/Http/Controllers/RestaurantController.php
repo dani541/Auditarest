@@ -46,26 +46,21 @@ class RestaurantController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
         }
 
         try {
             $restaurant = Restaurant::create($request->all());
-
-            return response()->json([
-                'success' => true,
-                'data' => $restaurant,
-                'message' => 'Restaurante creado exitosamente'
-            ], 201);
+            
+            return redirect()->route('admin.restaurants.index')
+                ->with('success', 'Restaurante creado exitosamente');
+                
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al crear el restaurante',
-                'error' => $e->getMessage()
-            ], 500);
+            return redirect()->back()
+                ->with('error', 'Error al crear el restaurante: ' . $e->getMessage())
+                ->withInput();
         }
     }
 
@@ -98,17 +93,11 @@ class RestaurantController extends Controller
         try {
             $restaurant = Restaurant::findOrFail($id);
             
-            return response()->json([
-                'success' => true,
-                'data' => $restaurant
-            ]);
+            return view('admin.restaurants.edit', compact('restaurant'));
             
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Restaurante no encontrado',
-                'error' => $e->getMessage()
-            ], 404);
+            return redirect()->route('admin.restaurants.index')
+                ->with('error', 'Restaurante no encontrado: ' . $e->getMessage());
         }
     }
 
@@ -118,37 +107,34 @@ class RestaurantController extends Controller
     public function update(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'sometimes|required|string|max:255',
-            'address' => 'sometimes|required|string|max:255',
-            'city' => 'sometimes|required|string|max:100',
-            'contact_name' => 'sometimes|required|string|max:100',
-            'contact_phone' => 'sometimes|required|string|max:20',
-            'contact_email' => 'sometimes|required|email|unique:restaurants,contact_email,' . $id,
+            'name' => 'required|string|max:255',
+            'address' => 'required|string|max:255',
+            'city' => 'required|string|max:100',
+            'postal_code' => 'nullable|string|max:10',
+            'contact_name' => 'required|string|max:100',
+            'contact_phone' => 'required|string|max:20',
+            'contact_email' => 'required|email|unique:restaurants,contact_email,' . $id,
+            'opening_hours' => 'nullable|string',
+            'description' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
         }
 
         try {
             $restaurant = Restaurant::findOrFail($id);
             $restaurant->update($request->all());
 
-            return response()->json([
-                'success' => true,
-                'data' => $restaurant,
-                'message' => 'Restaurante actualizado exitosamente'
-            ]);
+            return redirect()->route('admin.restaurants.edit', $restaurant->id)
+                ->with('success', '¡Los datos del restaurante se han actualizado correctamente!');
             
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al actualizar el restaurante',
-                'error' => $e->getMessage()
-            ], 500);
+            return redirect()->back()
+                ->with('error', 'Error al actualizar el restaurante: ' . $e->getMessage())
+                ->withInput();
         }
     }
 

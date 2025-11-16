@@ -1,0 +1,70 @@
+# Resumen de Cambios - 10 de Noviembre 2025
+
+## 1. Corrección de Rutas de Usuarios
+- Actualizadas las rutas en `routes/web.php` para manejar correctamente las operaciones CRUD de usuarios
+- Asegurada la consistencia en los nombres de las rutas (ej: 'admin.users.store', 'admin.users.update', etc.)
+- Corregidos los parámetros de ruta para usar `{user}` en lugar de `{id}` para el enlace de modelos
+
+## 2. Mejoras en el Controlador de Usuarios
+- Actualizado `UserController.php` para manejar correctamente la creación y actualización de usuarios
+- Añadida la importación del modelo Role
+- Mejorado el manejo de errores y validaciones
+
+## 3. Vistas de Usuarios
+- Creada/Actualizada la vista `createUser.blade.php` con un formulario para crear nuevos usuarios
+- Añadido soporte para selección de roles y restaurantes
+- Mejorada la validación y retroalimentación al usuario
+
+## 4. Base de Datos
+- Creado y ejecutado el seeder `RoleSeeder` para poblar la tabla de roles con:
+  - Administrador
+  - Auditor
+  - Usuario
+
+## 5. Mejoras en la Interfaz de Usuario
+- Añadido botón "Crear Usuario" en la lista de usuarios
+- Mejorado el formulario de creación/edición de usuarios
+- Añadida validación en tiempo real y mensajes de error
+
+## 6. Corrección de Errores
+- Solucionado el error "Route [users.destroy] not defined"
+- Corregido el problema con el dropdown de roles vacío
+- Arreglada la validación de roles en el formulario
+
+## 7. Optimizaciones
+- Añadida carga ansiosa (eager loading) para relaciones en las consultas
+- Mejorado el rendimiento de las consultas a la base de datos
+- Optimizado el código para evitar consultas N+1
+
+## Instrucciones para el Despliegue
+1. Ejecutar migraciones:
+   ```bash
+   php artisan migrate:fresh --seed
+   ```
+
+2. Limpiar caché:
+   ```bash
+   php artisan cache:clear
+   php artisan config:clear
+   php artisan view:clear
+   ```
+
+3. Verificar que los roles se hayan creado correctamente en la base de datos.
+
+## Notas Adicionales
+- Asegurarse de que todos los usuarios tengan un rol asignado
+- Verificar los permisos de los roles en la aplicación
+- Revisar que las relaciones entre usuarios y restaurantes funcionen correctamente
+- IMPORTANTE: Si se produce un error al crear un nuevo usuario, verificar que:
+  1. Se hayan sembrado los roles en la base de datos ejecutando:
+     ```bash
+     php artisan db:seed --class=RoleSeeder
+     ```
+  2. La tabla `roles` contenga al menos los roles básicos:
+     - Administrador
+     - Auditor
+     - Usuario
+  3. La tabla `users` tenga la restricción de clave foránea `role_id` configurada correctamente
+
+---
+Fin del Resumen - 10/11/2025

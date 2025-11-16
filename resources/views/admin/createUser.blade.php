@@ -128,20 +128,38 @@
 
                     <div class="mb-3">
                         <label class="form-label">Rol:</label>
-                        <select name="role_id" class="form-select" required>
+                        <select name="role_id" class="form-select @error('role_id') is-invalid @enderror" required>
                             <option value="">Seleccionar Rol</option>
-                            <option value="1">Administrador</option>
-                            <option value="2">Auditor</option>
-                            <option value="3">Usuario</option>
+                            @php
+                                // Add default roles if none exist
+                                $defaultRoles = [
+                                    (object)['id' => 1, 'name' => 'Administrador'],
+                                    (object)['id' => 2, 'name' => 'Auditor'],
+                                    (object)['id' => 3, 'name' => 'Usuario']
+                                ];
+                                $roles = $roles->isEmpty() ? collect($defaultRoles) : $roles;
+                            @endphp
+                            @foreach($roles as $role)
+                                <option value="{{ $role->id }}" {{ old('role_id') == $role->id ? 'selected' : '' }}>
+                                    {{ $role->name }}
+                                </option>
+                            @endforeach
                         </select>
+                        @error('role_id')
+                            <div class="invalid-feedback">
+                                {{ $message }}
+                            </div>
+                        @enderror
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Restaurante (opcional):</label>
                         <select name="restaurant_id" class="form-select">
                             <option value="">Seleccionar Restaurante</option>
-                            @foreach(\App\Models\Restaurant::all() as $restaurante)
-                                <option value="{{ $restaurante->id }}">{{ $restaurante->name }}</option>
+                            @foreach($restaurantes as $restaurante)
+                                <option value="{{ $restaurante->id }}" {{ old('restaurant_id') == $restaurante->id ? 'selected' : '' }}>
+                                    {{ $restaurante->name }}
+                                </option>
                             @endforeach
                         </select>
                     </div>
