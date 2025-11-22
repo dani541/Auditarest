@@ -60,10 +60,17 @@ class User extends Authenticatable
     /**
      * Un Usuario (auditor) puede auditar muchos restaurantes
      */
-    public function auditedRestaurants(): HasMany
-    {
-        return $this->hasMany(Restaurant::class, 'auditor_id');
-    }
+public function auditedRestaurants()
+{
+    return $this->hasManyThrough(
+        Restaurant::class,  // Modelo de destino
+        Audit::class,       // Modelo intermedio
+        'user_id',          // Clave foránea en la tabla audits
+        'id',               // Clave foránea en la tabla restaurants
+        'id',               // Clave local en users
+        'restaurant_id'     // Clave local en audits
+    );
+}
 
     /**
      * Un Usuario (Auditor) tiene muchas Auditorías asignadas.

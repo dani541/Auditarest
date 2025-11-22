@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RestaurantController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\AuditController;
 use App\Models\User;
 
 // Rutas de autenticación
@@ -49,6 +50,19 @@ Route::prefix('admin')->name('admin.')->group(function () {
     // 💾 Guardar nuevo restaurante
     Route::post('/restaurants', [RestaurantController::class, 'store'])
         ->name('restaurants.store');
+
+// Rutas de Auditorías
+// Rutas de Auditorías
+Route::prefix('audits')->name('audits.')->group(function () {
+    Route::get('/', [AuditController::class, 'index'])->name('index');
+    Route::get('/select-restaurant', [AuditController::class, 'selectRestaurant'])->name('select-restaurant');
+    Route::get('/restaurant/{restaurant}/create', [AuditController::class, 'create'])->name('create');
+    Route::post('/restaurant/{restaurant}', [AuditController::class, 'store'])->name('store');
+    Route::get('/{audit}', [AuditController::class, 'show'])->name('show');
+    Route::get('/{audit}/edit', [AuditController::class, 'edit'])->name('edit');
+    Route::put('/{audit}', [AuditController::class, 'update'])->name('update');
+    Route::delete('/{audit}', [AuditController::class, 'destroy'])->name('destroy');
+});
 
     // 🔍 Mostrar un restaurante específico
     Route::get('/restaurants/{id}', [RestaurantController::class, 'show'])
@@ -114,31 +128,19 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::delete('/users/{user}', [UserController::class, 'destroy'])
         ->name('users.destroy');
 
-    // 🔍 Auditorías de Restaurantes
-    Route::get('/restaurants/{restaurant}/audits', [\App\Http\Controllers\AuditController::class, 'index'])
-        ->name('restaurants.audits.index');
-    Route::get('/restaurants/{restaurant}/audits/{audit}', [\App\Http\Controllers\AuditController::class, 'show'])
-        ->name('restaurants.audits.show');
+    // Rutas protegidas
+    Route::middleware('auth')->group(function () {
+        // Ruta de admin
+        Route::get('/dashboard', function() {
+            if (auth()->user()->role !== 'admin') {
+                abort(403);
+            }
+            return view('admin.dashboard');
+        })->name('dashboard');
 
-
-// Rutas protegidas
-Route::middleware('auth')->group(function () {
-    // Ruta de admin
-    Route::get('/admin/dashboard', function() {
-        if (auth()->user()->role !== 'admin') {
-            abort(403);
-        }
-        return view('admin.dashboard');
+        // Ruta de auditor
+        Route::get('/auditor/dashboard', function() {
+            return view('auditor.dashboard');
+        })->name('auditor.dashboard');
     });
-
-    // Ruta de auditor
-    Route::get('/auditor/dashboard', function() {
-        return view('auditor.dashboard');
-    });
-});
-
-
-
-
-});
-
+}); // Cierre del grupo de rutas 'admin'

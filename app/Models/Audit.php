@@ -1,19 +1,31 @@
 <?php
 
 namespace App\Models;
-use HasFactory;
+
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Audit extends Model
 {
-    //
-
     protected $fillable = [
         'scheduled_date',
         'status',
         'user_id',       // FK: auditor
         'restaurant_id', // FK: restaurante
         'category_id',   // FK: categoría
+        'observations',  // Observaciones generales
+    ];
+    
+    protected $dates = [
+        'scheduled_date',
+        'created_at',
+        'updated_at',
+    ];
+    
+    protected $casts = [
+        'scheduled_date' => 'date',
     ];
 
     // --- Relaciones ---
@@ -43,7 +55,25 @@ class Audit extends Model
     }
 
     /**
-     * Una Auditoría tiene muchas Respuestas.
+     * Una Auditoría tiene muchas Respuestas de verificación.
+     */
+    public function verificationResponses(): HasMany
+    {
+        return $this->hasMany(VerificationResponse::class);
+    }
+    
+    /**
+     * Los ítems de verificación asociados a través de las respuestas.
+     */
+    public function verificationItems(): BelongsToMany
+    {
+        return $this->belongsToMany(VerificationItem::class, 'verification_responses')
+                    ->withPivot(['status', 'corrective_measure', 'temperature'])
+                    ->withTimestamps();
+    }
+    
+    /**
+     * Respuestas heredadas (mantener compatibilidad)
      */
     public function responses(): HasMany
     {
@@ -53,9 +83,44 @@ class Audit extends Model
     /**
      * Una Auditoría tiene muchas Evidencias.
      */
-    public function evidences(): HasMany
+    public function evidences()
     {
         return $this->hasMany(Evidence::class);
+    }
+    
+    /**
+     * Obtener el porcentaje de cumplimiento de la auditoría
+     */
+    public function getCompliancePercentageAttribute()
+    {
+        $total = $this->verificationItems()->count();
+        if ($total === 0) {
+            return 0;
+        }
+        
+        $compliance = $this->verificationItems()
+            ->where('verification_responses.status', 'C')
+            ->count();
+            
+        return round(($compliance / $total) * 100, 2);
+    }
+    
+    /**
+     * Obtener el estado de la auditoría con formato
+     */
+    public function getStatusBadgeAttribute()
+    {
+        $statuses = [
+            'pendiente' => 'warning',
+            'en_curso' => 'info',
+            'completada' => 'success',
+            'vencida' => 'danger',
+        ];
+        
+        $status = strtolower($this->status);
+        $class = $statuses[$status] ?? 'secondary';
+        
+        return '<span class="badge bg-' . $class . '">' . ucfirst($status) . '</span>';
     }
 
 

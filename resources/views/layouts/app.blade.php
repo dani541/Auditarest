@@ -99,42 +99,39 @@
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            <nav class="col-md-2 d-none d-md-block sidebar">
-                <div class="sidebar-sticky">
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">
-                                <i class="fas fa-tachometer-alt me-2"></i> Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('admin.restaurants.*') ? 'active' : '' }}" href="{{ route('admin.restaurants.index') }}">
-                                <i class="fas fa-utensils me-2"></i> Restaurantes
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('admin.audits.*') ? 'active' : '' }}" href="#">
-                                <i class="fas fa-clipboard-list me-2"></i> Auditorías
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}" href="#">
-                                <i class="fas fa-users me-2"></i> Usuarios
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}" href="#">
-                                <i class="fas fa-tags me-2"></i> Categorías
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">
-                                <i class="fas fa-chart-bar me-2"></i> Reportes
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
+ <!-- Barra de navegación lateral -->
+<nav class="col-md-2 d-none d-md-block sidebar">
+    <div class="sidebar-sticky">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" 
+                   href="{{ route('admin.dashboard') }}">
+                    <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('admin.restaurants.*') ? 'active' : '' }}" 
+                   href="{{ route('admin.restaurants.index') }}">
+                    <i class="fas fa-utensils me-2"></i> Restaurantes
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('admin.audits.*') ? 'active' : '' }}" 
+                href="{{ route('admin.audits.index') }}">
+                    <i class="fas fa-clipboard-list me-2"></i> Auditorías
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}" 
+                   href="{{ route('admin.users.index') }}">
+                    <i class="fas fa-users me-2"></i> Usuarios
+                </a>
+            </li>
+            
+            
+        </ul>
+    </div>
+</nav>
 
             <!-- Contenido principal -->
             <main role="main" class="col-md-10 ms-sm-auto px-4">

@@ -1,61 +1,79 @@
 @extends('layouts.app')
 
+@section('title', 'Todas las Auditorías')
+
 @section('content')
-<div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Historial de Auditorías - {{ $restaurant->name }}</h1>
-        <a href="{{ route('admin.restaurants.index') }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Volver a la lista
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Todas las Auditorías</h1>
+        <a href="{{ route('audits.select-restaurant') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nueva Auditoría
         </a>
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success">
-            {{ session('success') }}
+    @foreach($restaurants as $restaurant)
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">
+                {{ $restaurant->name }}
+                <span class="badge bg-info text-white">
+                    {{ $restaurant->audits->count() }} auditorías
+                </span>
+            </h6>
         </div>
-    @endif
-
-    <div class="card">
+        
+        @if($restaurant->audits->isNotEmpty())
+        <div class="table-responsive">
+            <table class="table table-bordered mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Fecha</th>
+                        <th>Auditor</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($restaurant->audits as $audit)
+                    <tr>
+                        <td>{{ $audit->id }}</td>
+                        <td>{{ $audit->scheduled_date->format('d/m/Y') }}</td>
+                        <td>{{ $audit->auditor->name ?? 'Sin asignar' }}</td>
+                        <td>
+                            <span class="badge {{ $audit->status === 'completada' ? 'bg-success' : 'bg-warning' }}">
+                                {{ ucfirst($audit->status) }}
+                            </span>
+                        </td>
+                        <td class="text-nowrap">
+                            <a href="{{ route('audits.edit', $audit) }}" 
+                               class="btn btn-sm btn-warning" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form action="{{ route('audits.destroy', $audit) }}" 
+                                  method="POST" 
+                                  class="d-inline"
+                                  onsubmit="return confirm('¿Estás seguro de eliminar esta auditoría?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-sm btn-danger" title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        @else
         <div class="card-body">
-            @if($audits->isEmpty())
-                <div class="alert alert-info">No hay registros de auditoría para este restaurante.</div>
-            @else
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Evento</th>
-                                <th>Usuario</th>
-                                <th>Fecha</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($audits as $audit)
-                                <tr>
-                                    <td>{{ $audit->id }}</td>
-                                    <td>
-                                        <span class="badge bg-{{ $audit->event === 'created' ? 'success' : ($audit->event === 'updated' ? 'warning' : 'danger') }}">
-                                            {{ ucfirst($audit->event) }}
-                                        </span>
-                                    </td>
-                                    <td>{{ $audit->user->name ?? 'Sistema' }}</td>
-                                    <td>{{ $audit->created_at->format('d/m/Y H:i:s') }}</td>
-                                    <td>
-                                        <a href="{{ route('admin.restaurants.audits.show', ['restaurant' => $restaurant->id, 'audit' => $audit->id]) }}" 
-                                           class="btn btn-sm btn-info">
-                                            <i class="fas fa-eye"></i> Ver detalles
-                                        </a>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-                {{ $audits->links() }}
-            @endif
+            <div class="alert alert-info mb-0">
+                Este restaurante no tiene auditorías registradas.
+            </div>
         </div>
+        @endif
     </div>
+    @endforeach
 </div>
 @endsection

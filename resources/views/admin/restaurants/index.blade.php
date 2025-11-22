@@ -102,7 +102,7 @@
                                     </a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="{{ route('admin.restaurants.audits.index', $restaurant->id) }}">
+                                    <a class="dropdown-item" href="{{ route('admin.audits.select-restaurant') }}?restaurant_id={{ $restaurant->id }}">
                                         <i class="fas fa-history me-2"></i>Ver auditorías
                                     </a>
                                 </li>

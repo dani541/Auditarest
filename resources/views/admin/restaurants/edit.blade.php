@@ -84,16 +84,7 @@
                                     @enderror
                                 </div>
                             </div>
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label class="form-label">Código Postal</label>
-                                    <input type="text" class="form-control @error('postal_code') is-invalid @enderror" 
-                                           name="postal_code" value="{{ old('postal_code', $restaurant->postal_code) }}">
-                                    @error('postal_code')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
+                            
                         </div>
                     </div>
 
@@ -132,25 +123,11 @@
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Horario</label>
-                            <input type="text" class="form-control @error('opening_hours') is-invalid @enderror" 
-                                   name="opening_hours" value="{{ old('opening_hours', $restaurant->opening_hours) }}">
-                            @error('opening_hours')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+                        
                     </div>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Descripción</label>
-                    <textarea class="form-control @error('description') is-invalid @enderror" 
-                              name="description" rows="3">{{ old('description', $restaurant->description) }}</textarea>
-                    @error('description')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
+              
 
                 <div class="d-flex justify-content-end mt-4">
                     <a href="{{ route('admin.restaurants.index') }}" class="btn btn-outline-secondary me-2">
