@@ -12,25 +12,38 @@ class AuthController extends Controller
         return view('login');
     }
 
-    public function login(Request $request)
-    {
-        $credentials = $request->only('email', 'password');
+public function login(Request $request)
+{
+    $credentials = $request->only('email', 'password');
 
-        if (Auth::attempt($credentials)) {
-            $user = Auth::user();
-            
-            if ($user->role === 'admin') {
-                return redirect('/admin/dashboard');
-            }
-            
-            return redirect('/auditor/dashboard');
-        }
+    \Log::info('Intento de login', [
+        'email' => $request->email,
+        'user_exists' => \App\Models\User::where('email', $request->email)->exists()
+    ]);
 
-        return back()->withErrors([
-            'email' => 'Credenciales incorrectas',
+    if (Auth::attempt($credentials)) {
+        $user = Auth::user()->load('role'); // Cargar la relación role
+        
+        \Log::info('Login exitoso', [
+            'user_id' => $user->id,
+            'role' => $user->role ? $user->role->name : 'sin rol'
         ]);
+
+        if ($user->hasRole('Administrador')) {
+            return redirect('/admin/restaurants');  //CAmbiado a reestauranres
+        } elseif ($user->hasRole('Auditor')) {
+            return redirect('/admin/auditor/index');
+        } else {
+            // Para usuarios con rol 'usuario' o sin rol definido
+            return redirect('/');
+        }
     }
 
+    \Log::warning('Credenciales incorrectas', ['email' => $request->email]);
+    return back()->withErrors([
+        'email' => 'Credenciales incorrectas',
+    ]);
+}
     public function logout()
     {
         Auth::logout();

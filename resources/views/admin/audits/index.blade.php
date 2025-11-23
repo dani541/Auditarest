@@ -6,7 +6,7 @@
 <div class="container-fluid">
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800">Listado de Auditorías</h1>
-        <a href="{{ route('admin.audits.select-restaurant') }}" class="btn btn-primary">
+        <a href="{{ route('audits.create') }}" class="btn btn-primary">
             <i class="fas fa-plus"></i> Nueva Auditoría
         </a>
     </div>
@@ -17,7 +17,7 @@
                 <div class="card shadow mb-4">
                     <div class="card-header py-3 d-flex justify-content-between align-items-center">
                         <h6 class="m-0 font-weight-bold text-primary">{{ $restaurant->name }}</h6>
-                        <a href="{{ route('admin.audits.create', $restaurant) }}" class="btn btn-sm btn-primary">
+                        <a href="{{ route('audits.create', ['restaurant' => $restaurant->id]) }}" class="btn btn-sm btn-primary">
                             <i class="fas fa-plus"></i> Nueva Auditoría
                         </a>
                     </div>
@@ -45,7 +45,7 @@
                                             </span>
                                         </td>
                                         <td>
-                                            <a href="{{ route('admin.audits.show', $audit) }}" 
+                                            <a href="{{ route('admin.audits.show', ['audit' => $audit->id]) }}" 
                                                class="btn btn-sm btn-info" title="Ver">
                                                 <i class="fas fa-eye"></i>
                                             </a>

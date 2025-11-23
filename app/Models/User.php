@@ -80,6 +80,14 @@ public function auditedRestaurants()
         // El campo 'user_id' en la tabla 'audits' identifica al auditor
         return $this->hasMany(Audit::class);
     }
+
+  
+
+   // En app/Models/User.php
+public function hasRole($roleName)
+{
+    return $this->role && $this->role->name === $roleName;
+}
 }
 
 

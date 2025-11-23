@@ -1,13 +1,15 @@
 <?php
 
+// app/Models/VerificationItem.php
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class VerificationItem extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'category',
         'description',
@@ -19,29 +21,8 @@ class VerificationItem extends Model
         'order' => 'integer',
     ];
 
-    /**
-     * Las respuestas asociadas a este ítem de verificación
-     */
-    public function verificationResponses(): HasMany
+    public function responses()
     {
         return $this->hasMany(VerificationResponse::class);
-    }
-
-    /**
-     * Las auditorías relacionadas a través de las respuestas
-     */
-    public function audits(): BelongsToMany
-    {
-        return $this->belongsToMany(Audit::class, 'verification_responses')
-                    ->withPivot(['status', 'corrective_measure', 'temperature'])
-                    ->withTimestamps();
-    }
-
-    /**
-     * Obtener ítems por categoría
-     */
-    public function scopeByCategory($query, $category)
-    {
-        return $query->where('category', $category)->orderBy('order');
     }
 }

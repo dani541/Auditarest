@@ -12,9 +12,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('audits', function (Blueprint $table) {
-            $table->id();
-            $table->date('scheduled_date');
-            $table->enum('status', ['pendiente', 'en_curso', 'completada', 'vencida'])->default('pendiente');
+        $table->id();
+        $table->date('date')->comment('Fecha de realización de la auditoría');
+        $table->enum('status', ['pendiente', 'en_curso', 'completada', 'vencida'])->default('pendiente');
+        $table->string('auditor');
+        $table->string('supervisor');
+        $table->string('responsable');
+        $table->text('incidencias_comentarios')->nullable();
             
             // FK: Auditor asignado (usuario_id)
             $table->foreignId('user_id')

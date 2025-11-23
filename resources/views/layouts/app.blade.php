@@ -65,48 +65,62 @@
 <body>
     <!-- Barra de navegación -->
     <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{{ route('admin.dashboard') }}">
-                <i class="fas fa-clipboard-check me-2"></i>AuditaRest
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('admin.dashboard') }}">
-                            <i class="fas fa-tachometer-alt me-1"></i> Dashboard
-                        </a>
-                    </li>
-                </ul>
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <span class="nav-link">
-                            <i class="fas fa-user-circle me-1"></i> Usuario
-                        </span>
-                    </li>
-                                    @csrf
-                                </form>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{{ route('landing') }}" aria-label="Inicio">
+            <i class="fas fa-clipboard-check me-2"></i>AuditaRest
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('admin.dashboard') }}" aria-label="Dashboard">
+                        <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+                    </a>
+                </li>
+            </ul>
+            <ul class="navbar-nav">
+                @auth
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">
+                        <i class="fas fa-user-circle me-1"></i> {{ Auth::user()->name }}
+                        <i class="fas fa-caret-down ms-1"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                        <li>
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button type="submit" class="dropdown-item" aria-label="Cerrar sesión">
+                                    <i class="fas fa-sign-out-alt me-2"></i> Cerrar sesión
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </li>
+                @else
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('login') }}" aria-label="Iniciar sesión">
+                        <i class="fas fa-sign-in-alt me-1"></i> Iniciar sesión
+                    </a>
+                </li>
+                @endauth
+            </ul>
         </div>
-    </nav>
+    </div>
+</nav>
 
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
  <!-- Barra de navegación lateral -->
 <nav class="col-md-2 d-none d-md-block sidebar">
+
     <div class="sidebar-sticky">
         <ul class="nav flex-column">
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" 
-                   href="{{ route('admin.dashboard') }}">
-                    <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                <a class="nav-link pe-none" style="cursor: default;">
+                    <i class="fas fa-tachometer-alt me-2"></i> Menú
                 </a>
             </li>
             <li class="nav-item">
@@ -116,8 +130,8 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('admin.audits.*') ? 'active' : '' }}" 
-                href="{{ route('admin.audits.index') }}">
+                <a class="nav-link {{ request()->routeIs('audits.*') ? 'active' : '' }}" 
+                href="{{ route('audits.index') }}">
                     <i class="fas fa-clipboard-list me-2"></i> Auditorías
                 </a>
             </li>
@@ -131,6 +145,7 @@
             
         </ul>
     </div>
+ 
 </nav>
 
             <!-- Contenido principal -->

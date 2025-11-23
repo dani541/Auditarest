@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+
 use App\Models\Audit;
+use App\Models\AuditCategory;
 use App\Models\Restaurant;
 use App\Models\VerificationItem;
 use App\Models\VerificationResponse;
@@ -15,6 +17,21 @@ use Illuminate\Support\Facades\Storage;
 class AuditController extends Controller
 {
 
+
+
+public function indexAudi()
+{
+    if (!auth()->check() || !auth()->user()->hasRole('Auditor')) {
+        abort(403, 'No tienes permiso para acceder a esta página');
+    }
+
+    $audits = Audit::where('user_id', auth()->id())
+        ->with('restaurant')
+        ->latest()
+        ->get();
+
+    return view('auditor.index', compact('audits'));
+}
  
 
 public function index()
@@ -25,98 +42,135 @@ public function index()
 
     return view('admin.audits.index', compact('restaurants'));
 }
-
+/*
 public function selectRestaurant()
 {
     $restaurants = Restaurant::all();
+    $categories = AuditCategory::with('questions')->orderBy('order')->get();
+    
+    return view('admin.audits.create', compact('restaurants', 'categories'));
+}
+*/
+public function selectRestaurant()
+{
+    $restaurants = Restaurant::all();
+    
+    if ($restaurants->isEmpty()) {
+        return redirect()->route('audits.index')
+            ->with('error', 'No hay restaurantes disponibles para auditar.');
+    }
+    
+    // If there's only one restaurant, redirect directly to create
+    if ($restaurants->count() === 1) {
+        return redirect()->route('audits.create', $restaurants->first());
+    }
+    
     return view('admin.audits.select-restaurant', compact('restaurants'));
 }
 
-public function create(Restaurant $restaurant)
-{
-    $verificationItems = VerificationItem::orderBy('category')
-        ->orderBy('order')
-        ->get()
-        ->groupBy('category');
 
-    return view('admin.audits.create', [
-        'restaurant' => $restaurant,
-        'verificationItems' => $verificationItems
+public function create()
+{
+    $restaurants = Restaurant::all();
+    $categories = AuditCategory::with(['questions' => function($query) {
+        $query->orderBy('order');
+    }])->orderBy('order')->get();
+    
+    if ($restaurants->isEmpty()) {
+        return redirect()->route('audits.index')
+            ->with('error', 'No hay restaurantes disponibles para auditar.');
+    }
+    
+    return view('admin.audits.create', compact('restaurants', 'categories'));
+}
+
+    
+
+
+
+
+
+
+   public function store(Request $request)
+{
+
+    $validated = $request->validate([
+        'restaurant_id' => 'required|exists:restaurants,id',
+        'auditor' => 'required|string|max:255',
+        'date' => 'required|date',
+        'supervisor' => 'required|string|max:255',
+        'responsable' => 'required|string|max:255',
+        'incidencias_comentarios' => 'nullable|string',
+        'verification' => 'required|array',
     ]);
+
+    DB::beginTransaction();
+    try {
+        // Create the audit
+        $audit = Audit::create([
+            'restaurant_id' => $validated['restaurant_id'],
+            'auditor' => $validated['auditor'],
+            'date' => $validated['date'],
+            'supervisor' => $validated['supervisor'],
+            'responsable' => $validated['responsable'],
+            'incidencias_comentarios' => $validated['incidencias_comentarios'] ?? null,
+            'status' => 'completada',
+            'auditor_id' => auth()->id(),
+        ]);
+
+        // Save verification responses
+        foreach ($validated['verification'] as $section => $items) {
+            foreach ($items as $index => $item) {
+                // Find the verification item
+                $verificationItem = VerificationItem::where('category', strtoupper($section))
+                    ->where('order', $index + 1)
+                    ->first();
+
+                if ($verificationItem) {
+                    VerificationResponse::create([
+                        'audit_id' => $audit->id,
+                        'verification_item_id' => $verificationItem->id,
+                        'complies' => (bool)($item['complies'] ?? false),
+                        'notes' => $item['notes'] ?? null,
+                        'value' => $item['value'] ?? null,
+                    ]);
+                }
+            }
+        }
+
+        DB::commit();
+
+        return redirect()->route('admin.audits.show', $audit)
+            ->with('success', 'Auditoría creada correctamente.');
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        \Log::error('Error al crear la auditoría: ' . $e->getMessage());
+        return redirect()->back()
+            ->with('error', 'Error al crear la auditoría. Por favor, inténtelo de nuevo.')
+            ->withInput();
+    }
+}
+
+/**
+ * Save verification items for an audit
+ */
+private function saveVerificationItems($audit, $section, $items)
+{
+    foreach ($items as $index => $item) {
+        $verificationItem = new \App\Models\VerificationItem([
+            'section' => $section,
+            'item_index' => $index,
+            'complies' => (bool)$item['complies'],
+            'notes' => $item['notes'] ?? null,
+        ]);
+        
+        $audit->verificationItems()->save($verificationItem);
+    }
 }
 
 
-
-
-
-
-
-    /**
-     * Almacena una nueva auditoría
-     */
-    public function store(Request $request, Restaurant $restaurant)
-    {
-        $request->validate([
-            'audit_date' => 'required|date',
-            'evidence.*' => 'nullable|file|mimes:jpeg,png,jpg,gif,pdf,doc,docx|max:5120',
-        ]);
-
-        try {
-            DB::beginTransaction();
-
-            // Crear la auditoría
-            $audit = Audit::create([
-                'scheduled_date' => $request->audit_date,
-                'status' => 'completada',
-                'user_id' => auth()->id(),
-                'restaurant_id' => $restaurant->id,
-                'observations' => $request->general_observations,
-            ]);
-
-            // Procesar las respuestas de verificación
-            foreach ($request->all() as $key => $value) {
-                if (str_starts_with($key, 'status_')) {
-                    $itemId = str_replace('status_', '', $key);
-                    
-                    VerificationResponse::create([
-                        'audit_id' => $audit->id,
-                        'verification_item_id' => $itemId,
-                        'status' => $value,
-                        'corrective_measure' => $request->input("corrective_measure_{$itemId}"),
-                        'temperature' => $request->input("temperature_{$itemId}"),
-                    ]);
-                }
-            }
-
-            // Procesar evidencias
-            if ($request->has('evidence')) {
-                foreach ($request->evidence as $evidence) {
-                    $path = $evidence->store("audits/{$audit->id}/evidences", 'public');
-                    
-                    $audit->evidences()->create([
-                        'path' => $path,
-                        'original_name' => $evidence->getClientOriginalName(),
-                        'mime_type' => $evidence->getClientMimeType(),
-                        'size' => $evidence->getSize(),
-                    ]);
-                }
-            }
-
-            DB::commit();
-
-            return redirect()
-                ->route('admin.restaurants.audits.show', [$restaurant->id, $audit->id])
-                ->with('success', 'Auditoría registrada correctamente.');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            \Log::error('Error al guardar la auditoría: ' . $e->getMessage());
-            
-            return back()
-                ->withInput()
-                ->with('error', 'Ocurrió un error al guardar la auditoría. Por favor, inténtalo de nuevo.');
-        }
-    }
+    
 
     /**
      * Muestra el detalle de una auditoría
