@@ -10,6 +10,6 @@ class AuditCategory extends Model
 
     public function questions()
     {
-        return $this->hasMany(AuditQuestion::class)->orderBy('order');
+        return $this->hasMany(AuditQuestion::class, 'category_id')->orderBy('order');
     }
 }

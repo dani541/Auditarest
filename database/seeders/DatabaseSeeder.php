@@ -28,6 +28,14 @@ class DatabaseSeeder extends Seeder
             'role_id' => 1, // ID del rol administrador
         ]);
 
+
+                User::create([
+            'name' => 'Nuevo Administrador',
+            'email' => 'nuevo@admin.com',
+            'password' => bcrypt('tu_contraseña_segura'),
+            'role_id' => 1
+        ]);
+
         // Create an auditor user if it doesn't exist
         $auditor = User::firstOrCreate(
             ['email' => 'auditor@example.com'],

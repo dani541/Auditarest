@@ -39,11 +39,7 @@
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                            Auditorías Pendientes</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">
-                            {{ App\Models\Audit::where('status', 'pendiente')->count() }}
-                        </div>
+                        
                     </div>
                     <div class="col-auto">
                         <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>

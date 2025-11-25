@@ -59,10 +59,15 @@ class Audit extends Model
     /**
      * Obtiene el usuario que realizó la auditoría.
      */
-    public function auditorUser(): BelongsTo
+  /*  public function auditorUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'auditor_id');
-    }
+    }*/
+
+           public function auditor()
+   {
+       return $this->belongsTo(User::class, 'auditor_id');
+   }
 
     /**
      * Obtiene el supervisor de la auditoría.

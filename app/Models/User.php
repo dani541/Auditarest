@@ -65,11 +65,11 @@ public function auditedRestaurants()
     return $this->hasManyThrough(
         Restaurant::class,  // Modelo de destino
         Audit::class,       // Modelo intermedio
-        'user_id',          // Clave foránea en la tabla audits
+        'auditor',          // Clave foránea en la tabla audits (usamos el nombre del auditor)
         'id',               // Clave foránea en la tabla restaurants
-        'id',               // Clave local en users
+        'name',             // Clave local en users (el nombre del usuario)
         'restaurant_id'     // Clave local en audits
-    );
+    )->where('audits.auditor', $this->name);  // Aseguramos que coincida el nombre
 }
 
     /**

@@ -149,6 +149,20 @@ Route::prefix('admin')->name('admin.')->group(function () {
         ->name('admin.auditor.index');
 }); 
 
-// Ruta de auditor (mantenida por compatibilidad)
-Route::get('/auditor/index', [AuditController::class, 'indexAudi'])
-    ->name('auditor.index');
+// Auditor routes
+Route::prefix('auditor')->name('auditor.')->group(function () {
+    Route::get('/index', [AuditController::class, 'indexAudi'])->name('index');
+    Route::get('/audits/{audit}', [AuditController::class, 'show'])->name('audits.show');
+});
+
+// Add a direct route for showing audit details
+Route::get('audits/{audit}', [AuditController::class, 'show'])->name('audits.show');
+
+// Add the export-pdf route inside the admin group
+Route::prefix('admin')->name('admin.')->group(function () {
+    // ... other admin routes ...
+    
+    // Updated route to match the expected URL structure
+    Route::get('audits/{audit}/export-pdf', [AuditController::class, 'exportPdf'])
+        ->name('audits.export-pdf');
+});

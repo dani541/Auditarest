@@ -16,16 +16,20 @@ use Illuminate\Support\Facades\Storage;
 
 class AuditController extends Controller
 {
+    protected $pdfService;
 
+    public function __construct(PdfService $pdfService)
+    {
+        $this->pdfService = $pdfService;
+    }
 
-
-public function indexAudi()
+    public function indexAudi()
 {
     if (!auth()->check() || !auth()->user()->hasRole('Auditor')) {
         abort(403, 'No tienes permiso para acceder a esta página');
     }
 
-    $audits = Audit::where('user_id', auth()->id())
+    $audits = Audit::where('auditor', auth()->user()->name)
         ->with('restaurant')
         ->latest()
         ->get();
@@ -96,6 +100,13 @@ public function create()
         'machinery' => 'required|array',
         'hygiene' => 'required|array',
     ]);
+    
+    // Debug: Log the incoming request data
+    \Log::info('Incoming request data:', [
+        'infrastructure' => $validated['infrastructure'],
+        'machinery' => $validated['machinery'],
+        'hygiene' => $validated['hygiene']
+    ]);
 
     // Iniciar una transacción de base de datos
     DB::beginTransaction();
@@ -114,15 +125,21 @@ public function create()
 
         // Transformar los datos de infraestructura
         $infrastructureData = $this->transformSectionData($validated['infrastructure']);
-        $audit->infrastructure()->create($infrastructureData);
+        \Log::info('Infrastructure data after transformation:', $infrastructureData);
+        $infrastructure = $audit->infrastructure()->create($infrastructureData);
+        \Log::info('Infrastructure created:', $infrastructure->toArray());
 
         // Transformar los datos de maquinaria
         $machineryData = $this->transformSectionData($validated['machinery']);
-        $audit->machinery()->create($machineryData);
+        \Log::info('Machinery data after transformation:', $machineryData);
+        $machinery = $audit->machinery()->create($machineryData);
+        \Log::info('Machinery created:', $machinery->toArray());
 
         // Transformar los datos de higiene
         $hygieneData = $this->transformSectionData($validated['hygiene']);
-        $audit->hygiene()->create($hygieneData);
+        \Log::info('Hygiene data after transformation:', $hygieneData);
+        $hygiene = $audit->hygiene()->create($hygieneData);
+        \Log::info('Hygiene created:', $hygiene->toArray());
 
         // Confirmar la transacción
         DB::commit();
@@ -146,29 +163,90 @@ public function create()
 private function transformSectionData(array $sectionData): array
 {
     $transformed = [];
-    $processedFields = [];
+    
+    // If the data is already in the correct format (key-value pairs)
+    if (isset($sectionData[0]) && is_array($sectionData[0])) {
+        $sectionData = $sectionData[0];
+    }
     
     foreach ($sectionData as $key => $value) {
-        // Extract the base field name (e.g., 'floor' from 'floor_condition')
-        if (str_ends_with($key, '_condition')) {
-            $fieldName = str_replace('_condition', '', $key);
+        // Skip if the key is numeric (indicating it's part of an array we don't need)
+        if (is_numeric($key)) {
+            continue;
+        }
+        
+        // Handle boolean values (checkboxes)
+        if (is_bool($value) || $value === '1' || $value === '0' || $value === 1 || $value === 0) {
             $transformed[$key] = (bool)$value;
-            $processedFields[] = $fieldName;
-        } elseif (str_ends_with($key, '_notes')) {
-            $fieldName = str_replace('_notes', '', $key);
+        } 
+        // Handle string values
+        else if (is_string($value)) {
+            $transformed[$key] = $value ?: null;
+        }
+        // Handle arrays (for checkboxes that might be arrays)
+        else if (is_array($value)) {
+            // If it's an array with a single value, use that
+            if (count($value) === 1 && isset($value[0])) {
+                $transformed[$key] = $value[0] ?: null;
+            } else {
+                $transformed[$key] = json_encode($value);
+            }
+        }
+        // Handle other types as is
+        else {
             $transformed[$key] = $value;
-            $processedFields[] = $fieldName;
         }
     }
     
-    // Ensure all fields have both condition and notes, even if empty
-    $allFields = array_unique($processedFields);
-    foreach ($allFields as $field) {
-        if (!isset($transformed["{$field}_condition"])) {
-            $transformed["{$field}_condition"] = false;
+    // Add audit_id if it's not already set
+    if (!isset($transformed['audit_id']) && isset($this->audit)) {
+        $transformed['audit_id'] = $this->audit->id;
+    }
+    
+    // Ensure required fields for each section exist
+    $sectionType = '';
+    if (isset($sectionData['section_type'])) {
+        $sectionType = $sectionData['section_type'];
+    }
+    
+    // Define required fields for each section type
+    $requiredFields = [];
+    
+    if (strpos(json_encode($sectionData), 'uniforms_condition') !== false || 
+        strpos(json_encode($sectionData), 'hand_washing_condition') !== false) {
+        // Hygiene section
+        $requiredFields = [
+            'uniforms_condition', 'hand_washing_condition', 'hygiene_kits_condition',
+            'food_handling_condition', 'gloves_usage', 'hair_restraint_usage',
+            'cleaning_supplies_condition', 'sanitization_procedures',
+            'food_storage_condition', 'chemical_storage_condition'
+        ];
+    } else if (strpos(json_encode($sectionData), 'equipment_condition') !== false) {
+        // Machinery section
+        $requiredFields = [
+            'equipment_condition', 'maintenance_status', 'safety_devices',
+            'calibration_status', 'operational_status'
+        ];
+    } else {
+        // Infrastructure section (default)
+        $requiredFields = [
+            'floor_condition', 'walls_condition', 'ceiling_condition',
+            'lighting_condition', 'ventilation_condition', 'sanitary_condition',
+            'equipment_condition', 'refrigeration_condition',
+            'food_storage_condition', 'waste_management_condition'
+        ];
+    }
+    
+    // Ensure all required fields exist with default values
+    foreach ($requiredFields as $field) {
+        if (!array_key_exists($field, $transformed)) {
+            $transformed[$field] = false;
         }
-        if (!isset($transformed["{$field}_notes"])) {
-            $transformed["{$field}_notes"] = null;
+        
+        // Add corresponding notes field if it doesn't exist
+        $notesField = str_replace('_condition', '_notes', $field);
+        if ($notesField !== $field && !array_key_exists($notesField, $transformed)) {
+            $transformed[$notesField] = null;
         }
     }
     
@@ -196,35 +274,85 @@ private function saveVerificationItems($audit, $section, $items)
 
 
     
-
     /**
      * Muestra el detalle de una auditoría
      */
-    public function show(Restaurant $restaurant, Audit $audit)
+    public function show(Audit $audit)
     {
+        // Cargar las relaciones necesarias con eager loading
         $audit->load([
-            'verificationItems',
-            'evidences',
-            'auditor',
-            'restaurant'
+            'restaurant',  
+            'infrastructure',
+            'machinery',
+            'hygiene'
         ]);
 
-        $groupedItems = $audit->verificationItems->groupBy('category');
+        // Debug: Log the loaded relationships
+        \Log::info('Audit loaded with relationships:', [
+            'audit_id' => $audit->id,
+            'restaurant' => $audit->restaurant ? 'Loaded' : 'Not loaded',
+            'infrastructure' => $audit->infrastructure ? 'Loaded' : 'Not loaded',
+            'machinery' => $audit->machinery ? 'Loaded' : 'Not loaded',
+            'hygiene' => $audit->hygiene ? 'Loaded' : 'Not loaded',
+        ]);
+        
+        // Verificar si hay datos de cada sección
+        $hasInfrastructure = $audit->infrastructure !== null;
+        $hasMachinery = $audit->machinery !== null;
+        $hasHygiene = $audit->hygiene !== null;
+        
+        // Obtener el restaurante de la auditoría
+        $restaurant = $audit->restaurant;
+        
+        // Si el restaurante no está cargado, intenta cargarlo manualmente
+        if (!$restaurant) {
+            $audit->load('restaurant');
+            $restaurant = $audit->restaurant;
+        }
+
+        // Obtener el nombre del auditor
+        $auditorName = $audit->auditor;
+        
+        // Calcula el progreso basado en las secciones completadas
+        $sections = array_filter([$hasInfrastructure, $hasMachinery, $hasHygiene]);
+        $progress = count($sections) > 0 ? (int) ((count(array_filter($sections)) / count($sections)) * 100) : 0;
 
         return view('admin.audits.show', [
             'audit' => $audit,
             'restaurant' => $restaurant,
-            'groupedItems' => $groupedItems
+            'auditorName' => $auditorName,
+            'progress' => $progress,
+            'hasInfrastructure' => $hasInfrastructure,
+            'hasMachinery' => $hasMachinery,
+            'hasHygiene' => $hasHygiene
         ]);
-    }
+}
 
     /**
      * Exporta una auditoría a PDF
      */
-    public function exportPdf(Restaurant $restaurant, Audit $audit)
+    public function exportPdf(Audit $audit)
     {
         try {
-            return $this->pdfService->generateAuditPdf($audit);
+            // Obtener el restaurante de la auditoría
+            $restaurant = $audit->restaurant;
+            
+            if (!$restaurant) {
+                abort(404, 'No se encontró el restaurante para esta auditoría');
+            }
+            
+            // Cargar las relaciones necesarias
+            $audit->load(['restaurant', 'infrastructure', 'machinery', 'hygiene']);
+            
+            // Generar la vista del PDF
+            $pdf = \PDF::loadView('pdf.audit', [
+                'audit' => $audit,
+                'restaurant' => $restaurant
+            ]);
+            
+            // Descargar el PDF
+            return $pdf->download("auditoria-{$audit->id}.pdf");
+            
         } catch (\Exception $e) {
             \Log::error('Error al generar PDF: ' . $e->getMessage());
             return back()->with('error', 'Error al generar el PDF: ' . $e->getMessage());

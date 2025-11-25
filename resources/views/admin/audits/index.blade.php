@@ -45,14 +45,14 @@
                                             </span>
                                         </td>
                                         <td>
-                                    <a href="{{ route('audits.show', $audit) }}" 
-                                               class="btn btn-sm btn-info" title="Ver">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                            <a href="#" 
-                                               class="btn btn-sm btn-secondary" title="Descargar PDF">
-                                                <i class="fas fa-file-pdf"></i>
-                                            </a>
+                                        <a href="{{ route('audits.show', ['restaurant' => $restaurant->id, 'audit' => $audit->id]) }}" 
+                                        class="btn btn-sm btn-info" title="Ver">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                            <a href="{{ route('audits.export-pdf', ['restaurant' => $restaurant->id, 'audit' => $audit->id]) }}" 
+                                                class="btn btn-sm btn-secondary" title="Descargar PDF">
+                                                    <i class="fas fa-file-pdf"></i>
+                                                </a>
                                         </td>
                                     </tr>
                                     @endforeach

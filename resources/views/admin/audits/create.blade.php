@@ -265,17 +265,17 @@
                                     <td class="text-center">
                                         <div class="form-check d-flex justify-content-center">
                                             <input class="form-check-input" type="radio" 
-                                                   name="hygiene[{{ $field }}_compliant]" 
+                                                   name="hygiene[{{ $field }}_condition]" 
                                                    value="1" 
-                                                   {{ old("hygiene.{$field}_compliant") === '1' ? 'checked' : '' }}>
+                                                   {{ old("hygiene.{$field}_condition") === '1' ? 'checked' : '' }}>
                                         </div>
                                     </td>
                                     <td class="text-center">
                                         <div class="form-check d-flex justify-content-center">
                                             <input class="form-check-input" type="radio" 
-                                                   name="hygiene[{{ $field }}_compliant]" 
+                                                   name="hygiene[{{ $field }}_condition]" 
                                                    value="0" 
-                                                   {{ old("hygiene.{$field}_compliant") === '0' ? 'checked' : '' }}>
+                                                   {{ old("hygiene.{$field}_condition") === '0' ? 'checked' : '' }}>
                                         </div>
                                     </td>
                                     <td>
