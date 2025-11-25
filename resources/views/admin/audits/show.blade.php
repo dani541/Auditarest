@@ -1,270 +1,163 @@
-@extends('layouts.auditor')
-
-@section('title', 'Detalle de Auditoría')
+@extends('layouts.app')
 
 @section('content')
-<div class="container-fluid">
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">Auditoría #{{ $audit->id }}</h1>
+<div class="container py-4">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Auditoría #{{ $audit->id }}</h1>
         <div>
-            <a href="{{ route('audits.index') }}" class="btn btn-secondary">
+            <a href="{{ route('audits.index') }}" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left"></i> Volver
+            </a>
+            <a href="{{ route('audits.export-pdf', $audit->id) }}" class="btn btn-primary">
+                <i class="fas fa-file-pdf"></i> Exportar PDF
             </a>
         </div>
     </div>
 
     <!-- Información General -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-3 bg-primary text-white">
-            <h6 class="m-0 font-weight-bold">Datos de la Auditoría</h6>
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Información General</h5>
         </div>
         <div class="card-body">
             <div class="row">
-                <div class="col-md-4">
-                    <p><strong>Restaurante:</strong> {{ $audit->restaurant->name ?? 'No especificado' }}</p>
-                    <p><strong>Auditor:</strong> {{ $audit->auditor ?? 'No asignado' }}</p>
+                <div class="col-md-6">
+                    <p class="mb-2">
+                        <strong><i class="fas fa-utensils me-2"></i>Restaurante:</strong>
+                        <span class="float-end">{{ $audit->restaurant->name ?? 'N/A' }}</span>
+                    </p>
+                    <p class="mb-2">
+                        <strong><i class="far fa-calendar-alt me-2"></i>Fecha:</strong>
+                        <span class="float-end">{{ $audit->created_at ? \Carbon\Carbon::parse($audit->date)->format('d/m/Y') : 'N/A' }}</span>
+                    </p>
                 </div>
-                <div class="col-md-4">
-                    <p><strong>Fecha:</strong> {{ $audit->date ? $audit->date->format('d/m/Y') : 'No especificada' }}</p>
-                    <p><strong>Supervisor:</strong> {{ $audit->supervisor ?? 'No especificado' }}</p>
-                </div>
-                <div class="col-md-4">
-                    <p><strong>Estado:</strong> 
-                        <span class="badge {{ $audit->status === 'completada' ? 'bg-success' : 'bg-warning' }}">
-                            {{ ucfirst($audit->status ?? 'pendiente') }}
-                        </span>
+                <div class="col-md-6">
+                    <p class="mb-2">
+                        <strong><i class="fas fa-user-tie me-2"></i>Auditor:</strong>
+                        <span class="float-end">{{ $audit->auditor ?? 'N/A' }}</span>
+                    </p>
+                    <p class="mb-2">
+                        <strong><i class="fas fa-user-shield me-2"></i>Supervisor:</strong>
+                        <span class="float-end">{{ $audit->supervisor ?? 'N/A' }}</span>
                     </p>
                 </div>
             </div>
+
             @if($audit->general_notes)
-                <div class="row mt-3">
-                    <div class="col-12">
-                        <p><strong>Notas Generales:</strong></p>
-                        <p>{{ $audit->general_notes }}</p>
-                    </div>
+            <div class="mt-3 pt-3 border-top">
+                <h6 class="text-muted mb-3"><i class="fas fa-clipboard me-2"></i>Observaciones Generales</h6>
+                <div class="bg-light p-3 rounded">
+                    {!! nl2br(e($audit->general_notes)) !!}
                 </div>
+            </div>
             @endif
         </div>
     </div>
 
-    <!-- Sección 1: Infraestructura -->
+    <!-- Sección de Infraestructura -->
     @if($audit->infrastructure)
-    <div class="card shadow mb-4">
-        <div class="card-header py-3 bg-primary text-white">
-            <h6 class="m-0 font-weight-bold">I. 🏗️ Infraestructura (Infrastructure)</h6>
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-building me-2"></i> 1. Infraestructura</h5>
+            <div class="mt-2">
+                <span class="badge bg-{{ $audit->infrastructure->percentage >= 70 ? 'success' : ($audit->infrastructure->percentage >= 40 ? 'warning' : 'danger') }}">
+                    Puntuación: {{ $audit->infrastructure->total_score }} ({{ number_format($audit->infrastructure->percentage, 2) }}%)
+                </span>
+            </div>
         </div>
         <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered">
-                    <thead class="thead-light">
-                        <tr>
-                            <th style="width: 50%">Elemento de Verificación</th>
-                            <th class="text-center" style="width: 15%">Estado</th>
-                            <th style="width: 35%">Incidencia / Medida Correctora</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @php
-                            $infrastructureItems = [
-                                'floor_condition' => 'Suelo en buen estado',
-                                'walls_condition' => 'Paredes en buen estado',
-                                'ceiling_condition' => 'Techos en buen estado',
-                                'lighting_condition' => 'Lámparas y luminarias en buen estado',
-                                'ventilation_condition' => 'Ventilación adecuada',
-                                'sanitary_condition' => 'Condiciones sanitarias adecuadas',
-                                'equipment_condition' => 'Equipos en buen estado',
-                                'refrigeration_condition' => 'Refrigeración en buen estado',
-                                'food_storage_condition' => 'Almacenamiento de alimentos adecuado',
-                                'waste_management_condition' => 'Manejo de residuos adecuado'
-                            ];
-                        @endphp
-
-                        @foreach($infrastructureItems as $field => $label)
-                            @php
-                                $condition = $audit->infrastructure->$field ?? null;
-                                $notesField = str_replace('_condition', '_notes', $field);
-                                $notes = $audit->infrastructure->$notesField ?? '';
-                            @endphp
-                            <tr>
-                                <td>{{ $label }}</td>
-                                <td class="text-center">
-                                    @if($condition === 1)
-                                        <span class="badge bg-success">Conforme</span>
-                                    @elseif($condition === 0)
-                                        <span class="badge bg-danger">No Conforme</span>
-                                    @else
-                                        <span class="badge bg-secondary">No evaluado</span>
-                                    @endif
-                                </td>
-                                <td>{{ $notes ?: 'N/A' }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+            @include('admin.audits.partials.inspection-table', [
+                'data' => $audit->infrastructure,
+                'exclude' => ['id', 'audit_id', 'created_at', 'updated_at', 'deleted_at', 'total_score', 'percentage']
+            ])
+            
+            @if(!empty($audit->infrastructure->additional_notes))
+            <div class="mt-3 pt-3 border-top">
+                <h6 class="text-muted"><i class="fas fa-clipboard me-2"></i>Observaciones Adicionales</h6>
+                <p class="mb-0">{{ $audit->infrastructure->additional_notes }}</p>
             </div>
+            @endif
         </div>
     </div>
     @endif
 
-    <!-- Sección 2: Maquinaria y Equipos -->
+    <!-- Sección de Maquinaria -->
     @if($audit->machinery)
-    <div class="card shadow mb-4">
-        <div class="card-header py-3 bg-primary text-white">
-            <h6 class="m-0 font-weight-bold">II. 🍳 Maquinaria y Equipos (Machinery and Equipment)</h6>
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-tools me-2"></i> 2. Maquinaria</h5>
+            <div class="mt-2">
+                <span class="badge bg-{{ $audit->machinery->percentage >= 70 ? 'success' : ($audit->machinery->percentage >= 40 ? 'warning' : 'danger') }}">
+                    Puntuación: {{ $audit->machinery->total_score }} ({{ number_format($audit->machinery->percentage, 2) }}%)
+                </span>
+            </div>
         </div>
         <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered">
-                    <thead class="thead-light">
-                        <tr>
-                            <th style="width: 50%">Elemento de Verificación</th>
-                            <th class="text-center" style="width: 15%">Estado</th>
-                            <th style="width: 35%">Incidencia / Medida Correctora</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @php
-                            $machineryItems = [
-                                'equipment_condition' => 'Equipos en buen estado',
-                                'maintenance_status' => 'Mantenimiento al día',
-                                'safety_devices' => 'Dispositivos de seguridad funcionando',
-                                'calibration_status' => 'Equipos calibrados',
-                                'operational_status' => 'Estado operativo adecuado',
-                                'cleaning_status' => 'Limpieza de equipos',
-                                'temperature_control' => 'Control de temperatura adecuado',
-                                'safety_measures' => 'Medidas de seguridad implementadas',
-                                'documentation' => 'Documentación en regla',
-                                'training' => 'Personal capacitado en el uso de equipos'
-                            ];
-                        @endphp
-
-                        @foreach($machineryItems as $field => $label)
-                            @php
-                                $condition = $audit->machinery->$field ?? null;
-                                $notesField = str_replace('_condition', '_notes', $field);
-                                $notes = $audit->machinery->$notesField ?? '';
-                            @endphp
-                            <tr>
-                                <td>{{ $label }}</td>
-                                <td class="text-center">
-                                    @if($condition === 1)
-                                        <span class="badge bg-success">Conforme</span>
-                                    @elseif($condition === 0)
-                                        <span class="badge bg-danger">No Conforme</span>
-                                    @else
-                                        <span class="badge bg-secondary">No evaluado</span>
-                                    @endif
-                                </td>
-                                <td>{{ $notes ?: 'N/A' }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+            @include('admin.audits.partials.inspection-table', [
+                'data' => $audit->machinery,
+                'exclude' => ['id', 'audit_id', 'created_at', 'updated_at', 'deleted_at', 'total_score', 'percentage', 'maintenance_notes', 'last_maintenance_date']
+            ])
+            
+            @if(!empty($audit->machinery->maintenance_notes))
+            <div class="mt-3 pt-3 border-top">
+                <h6 class="text-muted"><i class="fas fa-clipboard me-2"></i>Notas de Mantenimiento</h6>
+                <p class="mb-0">{{ $audit->machinery->maintenance_notes }}</p>
+                @if(!empty($audit->machinery->last_maintenance_date))
+                <p class="text-muted mt-2 mb-0">
+                    <small>Último mantenimiento: {{ \Carbon\Carbon::parse($audit->machinery->last_maintenance_date)->format('d/m/Y') }}</small>
+                </p>
+                @endif
             </div>
+            @endif
         </div>
     </div>
     @endif
 
-    <!-- Sección 3: Buenas Prácticas y Condiciones Higiénicas -->
+    <!-- Sección de Higiene -->
     @if($audit->hygiene)
-    <div class="card shadow mb-4">
-        <div class="card-header py-3 bg-primary text-white">
-            <h6 class="m-0 font-weight-bold">III. ✅ Buenas Prácticas y Condiciones Higiénicas</h6>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered">
-                    <thead class="thead-light">
-                        <tr>
-                            <th style="width: 50%">Elemento de Verificación</th>
-                            <th class="text-center" style="width: 15%">Estado</th>
-                            <th style="width: 35%">Incidencia / Medida Correctora</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @php
-                            $hygieneItems = [
-                                'uniforms_condition' => 'Uso de uniformes adecuados',
-                                'hand_washing_condition' => 'Lavado de manos correcto',
-                                'hygiene_kits_condition' => 'Kits de higiene disponibles',
-                                'food_handling_condition' => 'Manejo adecuado de alimentos',
-                                'gloves_usage' => 'Uso de guantes',
-                                'hair_restraint_usage' => 'Uso de cofias/redes para el cabello',
-                                'cleaning_supplies_condition' => 'Suministros de limpieza adecuados',
-                                'sanitization_procedures' => 'Procedimientos de saneamiento',
-                                'food_storage_condition' => 'Almacenamiento de alimentos adecuado',
-                                'chemical_storage_condition' => 'Almacenamiento de químicos adecuado'
-                            ];
-                        @endphp
-
-                        @foreach($hygieneItems as $field => $label)
-                            @php
-                                $condition = $audit->hygiene->$field ?? null;
-                                $notesField = str_replace('_condition', '_notes', $field);
-                                $notes = $audit->hygiene->$notesField ?? '';
-                            @endphp
-                            <tr>
-                                <td>{{ $label }}</td>
-                                <td class="text-center">
-                                    @if($condition === 1)
-                                        <span class="badge bg-success">Conforme</span>
-                                    @elseif($condition === 0)
-                                        <span class="badge bg-danger">No Conforme</span>
-                                    @else
-                                        <span class="badge bg-secondary">No evaluado</span>
-                                    @endif
-                                </td>
-                                <td>{{ $notes ?: 'N/A' }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-hand-holding-water me-2"></i> 3. Higiene</h5>
+            <div class="mt-2">
+                <span class="badge bg-{{ $audit->hygiene->percentage >= 70 ? 'success' : ($audit->hygiene->percentage >= 40 ? 'warning' : 'danger') }}">
+                    Puntuación: {{ $audit->hygiene->total_score }} ({{ number_format($audit->hygiene->percentage, 2) }}%)
+                </span>
             </div>
         </div>
-    </div>
-    @endif
-
-    <!-- Sección de Notas Adicionales -->
-    @if($audit->additional_notes)
-    <div class="card shadow mb-4">
-        <div class="card-header py-3 bg-primary text-white">
-            <h6 class="m-0 font-weight-bold">IV. 📝 Notas Adicionales</h6>
-        </div>
         <div class="card-body">
-            <p>{{ $audit->additional_notes }}</p>
+            @include('admin.audits.partials.inspection-table', [
+                'data' => $audit->hygiene,
+                'exclude' => ['id', 'audit_id', 'created_at', 'updated_at', 'deleted_at', 'total_score', 'percentage']
+            ])
         </div>
     </div>
     @endif
 
-    <!-- Botón para generar PDF -->
-    <div class="text-center mt-4">
-        <a href="{{ url('admin/audits/' . $audit->id . '/export-pdf') }}" 
-           class="btn btn-danger">
-            <i class="fas fa-file-pdf"></i> Generar PDF
-        </a>
+    <!-- Sección de Firma y Sello -->
+    <div class="card shadow-sm">
+        <div class="card-body text-center">
+            <div class="row">
+                <div class="col-md-6 mb-3 mb-md-0">
+                    <div class="border-bottom pb-2 mb-2">
+                        <strong>Firma del Auditor</strong>
+                    </div>
+                    <div style="height: 80px;"></div>
+                    <div class="text-muted small">
+                        {{ $audit->auditor ?? 'Nombre del Auditor' }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="border-bottom pb-2 mb-2">
+                        <strong>Sello de la Empresa</strong>
+                    </div>
+                    <div style="height: 80px;"></div>
+                    <div class="text-muted small">
+                        {{ $audit->restaurant->name ?? 'Nombre del Restaurante' }}
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 @endsection
-
-@push('styles')
-<style>
-    .progress {
-        height: 1.5rem;
-        margin-top: 0.5rem;
-    }
-    .progress-bar {
-        font-size: 0.9rem;
-        line-height: 1.5rem;
-    }
-    .badge {
-        font-size: 0.9rem;
-        padding: 0.35em 0.65em;
-    }
-    .card-header h6 {
-        margin: 0;
-    }
-    table th {
-        white-space: nowrap;
-    }
-</style>
-@endpush

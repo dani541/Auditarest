@@ -10,6 +10,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Estilos personalizados -->
     <style>
         body {
@@ -130,15 +132,23 @@
                 </a>
             </li>
             <li class="nav-item">
+                <!--
                 <a class="nav-link {{ request()->routeIs('audits.*') ? 'active' : '' }}" 
                 href="{{ route('audits.index') }}">
                     <i class="fas fa-clipboard-list me-2"></i> Auditorías
-                </a>
+                </a> -->
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}" 
                    href="{{ route('admin.users.index') }}">
                     <i class="fas fa-users me-2"></i> Usuarios
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link {{ request()->is('reports*') ? 'active' : '' }}" 
+                href="{{ route('reports.index') }}">
+                    <i class="fas fa-chart-bar me-2"></i> Informes
                 </a>
             </li>
             

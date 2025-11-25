@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RestaurantController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AuditController;
+use App\Http\Controllers\ReportController;
+
 use App\Models\User;
 
 // Rutas de autenticación
@@ -163,6 +165,16 @@ Route::prefix('admin')->name('admin.')->group(function () {
     // ... other admin routes ...
     
     // Updated route to match the expected URL structure
-    Route::get('audits/{audit}/export-pdf', [AuditController::class, 'exportPdf'])
-        ->name('audits.export-pdf');
+   
 });
+
+// Ruta para mostrar el detalle de la auditoría (ya existe en la línea 40)
+Route::get('/audits/{id}', [AuditController::class, 'show'])->name('audits.show');
+
+// Ruta para exportar a PDF (siguiendo el patrón existente)
+Route::get('/audits/{audit}/export-pdf', [AuditController::class, 'exportPdf'])
+    ->name('audits.export-pdf');
+
+
+
+Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');

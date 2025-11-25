@@ -298,13 +298,13 @@
             </div>
             <div class="card-body">
                 <div class="form-group">
-                    <label for="additional_notes">Observaciones Generales</label>
-                    <textarea class="form-control" id="additional_notes" name="additional_notes" rows="3">{{ old('additional_notes') }}</textarea>
+                    <label for="general_notes">Observaciones Generales</label>
+                    <textarea class="form-control" id="general_notes" name="general_notes" rows="3">{{ old('general_notes') }}</textarea>
                 </div>
             </div>
         </div>
 
-        <!-- Botón de Envío -->
+      
         <div class="row mb-4">
             <div class="col-12 text-right">
                 <a href="{{ route('audits.index') }}" class="btn btn-secondary">
@@ -333,11 +333,11 @@
             }
         });
 
-        // Show/hide notes field when IC is selected
+       
         document.querySelectorAll('input[type="radio"][value="0"]').forEach(radio => {
             toggleIncidenceField(radio, incidenceInput);
             
-            // Mostrar/ocultar al cambiar la selección
+            
             radio.addEventListener('change', function() {
                 toggleIncidenceField(radio, incidenceInput);
             });

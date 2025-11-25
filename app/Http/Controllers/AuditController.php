@@ -277,6 +277,7 @@ private function saveVerificationItems($audit, $section, $items)
     /**
      * Muestra el detalle de una auditoría
      */
+    /*
     public function show(Audit $audit)
     {
         // Cargar las relaciones necesarias con eager loading
@@ -326,8 +327,56 @@ private function saveVerificationItems($audit, $section, $items)
             'hasMachinery' => $hasMachinery,
             'hasHygiene' => $hasHygiene
         ]);
-}
+}*/
+/*
+public function show($id)
+{
+    $audit = Audit::with([
+        'restaurant',
+        'infrastructure',
+        'machinery',
+        'hygiene',
+        //'verificationItems' // Si tienes esta relación
+    ])->findOrFail($id);
 
+    // Ver datos en desarrollo
+    if (config('app.debug')) {
+        return response()->json([
+            'audit' => $audit->toArray(),
+            'relationships' => [
+                'infrastructure' => $audit->infrastructure ? $audit->infrastructure->toArray() : null,
+                'machinery' => $audit->machinery ? $audit->machinery->toArray() : null,
+                'hygiene' => $audit->hygiene ? $audit->hygiene->toArray() : null
+            ]
+        ]);
+    }
+
+    return view('admin.audits.show', compact('audit'));
+} */
+
+    public function show($id)
+{
+    $audit = Audit::with([
+        'restaurant',
+        'infrastructure',
+        'machinery',
+        'hygiene'
+    ])->findOrFail($id);
+
+    // Si estamos en modo debug, mostramos los datos en formato JSON
+  //  if (config('app.debug')) {
+    //    return response()->json([
+       //     'audit' => $audit,
+       //     'relationships' => [
+       //         'infrastructure' => $audit->infrastructure,
+       //         'machinery' => $audit->machinery,
+       //         'hygiene' => $audit->hygiene
+       //     ]
+     //   ]);
+   // }
+
+    return view('admin.audits.show', compact('audit'));
+}
     /**
      * Exporta una auditoría a PDF
      */
