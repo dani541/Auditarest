@@ -39,16 +39,19 @@
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="auditor">Auditor</label>
-                            <input type="text" class="form-control @error('auditor') is-invalid @enderror" 
-                                   id="auditor" name="auditor" 
-                                   value="{{ old('auditor', auth()->user()->name) }}" required>
-                            @error('auditor')
-                                <span class="invalid-feedback" role="alert">
-                                    <strong>{{ $message }}</strong>
-                                </span>
-                            @enderror
-                        </div>
+    <label for="auditor">Auditor</label>
+    <input type="text" 
+           class="form-control @error('auditor') is-invalid @enderror" 
+           id="auditor" 
+           name="auditor" 
+           value="{{ old('auditor', auth()->check() ? auth()->user()->name : '') }}" 
+           required>
+    @error('auditor')
+        <span class="invalid-feedback" role="alert">
+            <strong>{{ $message }}</strong>
+        </span>
+    @enderror
+</div>
                     </div>
                 </div>
                 <div class="row">
@@ -78,6 +81,19 @@
                             @enderror
                         </div>
                     </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="general_notes">Notas Generales</label>
+                            <textarea class="form-control @error('general_notes') is-invalid @enderror" 
+                                      id="general_notes" name="general_notes" 
+                                      rows="1">{{ old('general_notes') }}</textarea>
+                            @error('general_notes')
+                                <span class="invalid-feedback" role="alert">
+                                    <strong>{{ $message }}</strong>
+                                </span>
+                            @enderror
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -101,40 +117,40 @@
                         <tbody>
                             @php
                                 $infrastructureItems = [
-                                    'Suelo en buen estado',
-                                    'Paredes en buen estado',
-                                    'Ventanas en buen estado',
-                                    'Puertas en buen estado',
-                                    'Techos en buen estado',
-                                    'Lámparas y luminarias en buen estado',
-                                    'Encimeras sin grietas ni descorchones',
-                                    'Mesas de trabajo sin grietas ni descorchones'
+                                    'floor' => 'Suelo en buen estado',
+                                    'walls' => 'Paredes en buen estado',
+                                    'windows' => 'Ventanas en buen estado',
+                                    'doors' => 'Puertas en buen estado',
+                                    'ceiling' => 'Techos en buen estado',
+                                    'lighting' => 'Lámparas y luminarias en buen estado',
+                                    'countertops' => 'Encimeras sin grietas ni descorchones',
+                                    'work_tables' => 'Mesas de trabajo sin grietas ni descorchones'
                                 ];
                             @endphp
 
-                            @foreach($infrastructureItems as $index => $item)
+                            @foreach($infrastructureItems as $field => $label)
                                 <tr>
-                                    <td>{{ $item }}</td>
+                                    <td>{{ $label }}</td>
                                     <td class="text-center">
                                         <div class="form-check d-flex justify-content-center">
                                             <input class="form-check-input" type="radio" 
-                                                   name="verification[infraestructura][{{ $index }}][complies]" 
+                                                   name="infrastructure[{{ $field }}_condition]" 
                                                    value="1" 
-                                                   {{ old("verification.infraestructura.{$index}.complies") === '1' ? 'checked' : '' }}>
+                                                   {{ old("infrastructure.{$field}_condition") === '1' ? 'checked' : '' }}>
                                         </div>
                                     </td>
                                     <td class="text-center">
                                         <div class="form-check d-flex justify-content-center">
                                             <input class="form-check-input" type="radio" 
-                                                   name="verification[infraestructura][{{ $index }}][complies]" 
+                                                   name="infrastructure[{{ $field }}_condition]" 
                                                    value="0" 
-                                                   {{ old("verification.infraestructura.{$index}.complies") === '0' ? 'checked' : '' }}>
+                                                   {{ old("infrastructure.{$field}_condition") === '0' ? 'checked' : '' }}>
                                         </div>
                                     </td>
                                     <td>
                                         <input type="text" class="form-control form-control-sm" 
-                                               name="verification[infraestructura][{{ $index }}][notes]" 
-                                               value="{{ old("verification.infraestructura.{$index}.notes") }}">
+                                               name="infrastructure[{{ $field }}_notes]" 
+                                               value="{{ old("infrastructure.{$field}_notes") }}">
                                     </td>
                                 </tr>
                             @endforeach
@@ -163,46 +179,46 @@
                         <tbody>
                             @php
                                 $machineryItems = [
-                                    'Fogones en buen estado',
-                                    'Horno en buen estado',
-                                    'Freidoras en buen estado',
-                                    'Placa de inducción en buen estado',
-                                    'Campana en buen estado',
-                                    'Tomas de gas sin fugas ni roturas',
-                                    'Microondas en buen estado',
-                                    'Lavavajillas en buen estado y sin fugas',
-                                    'Batidora en buen estado',
-                                    'Grifería en buen estado',
-                                    'Sistema eléctrico en buen estado',
-                                    'Refrigeradores en buen estado y manteniendo el frío',
-                                    'Arcónes en buen estado y manteniendo el frío',
-                                    'Tablas de corte en buen estado'
+                                    'stove' => 'Fogones en buen estado',
+                                    'oven' => 'Horno en buen estado',
+                                    'fryer' => 'Freidoras en buen estado',
+                                    'induction_cooktop' => 'Placa de inducción en buen estado',
+                                    'hood' => 'Campana en buen estado',
+                                    'gas_outlets' => 'Tomas de gas sin fugas ni roturas',
+                                    'microwave' => 'Microondas en buen estado',
+                                    'dishwasher' => 'Lavavajillas en buen estado y sin fugas',
+                                    'mixer' => 'Batidora en buen estado',
+                                    'faucets' => 'Grifería en buen estado',
+                                    'electrical_system' => 'Sistema eléctrico en buen estado',
+                                    'refrigerators' => 'Refrigeradores en buen estado y manteniendo el frío',
+                                    'freezers' => 'Arcónes en buen estado y manteniendo el frío',
+                                    'cutting_boards' => 'Tablas de corte en buen estado'
                                 ];
                             @endphp
 
-                            @foreach($machineryItems as $index => $item)
+                            @foreach($machineryItems as $field => $label)
                                 <tr>
-                                    <td>{{ $item }}</td>
+                                    <td>{{ $label }}</td>
                                     <td class="text-center">
                                         <div class="form-check d-flex justify-content-center">
                                             <input class="form-check-input" type="radio" 
-                                                   name="verification[maquinaria][{{ $index }}][complies]" 
+                                                   name="machinery[{{ $field }}_condition]" 
                                                    value="1" 
-                                                   {{ old("verification.maquinaria.{$index}.complies") === '1' ? 'checked' : '' }}>
+                                                   {{ old("machinery.{$field}_condition") === '1' ? 'checked' : '' }}>
                                         </div>
                                     </td>
                                     <td class="text-center">
                                         <div class="form-check d-flex justify-content-center">
                                             <input class="form-check-input" type="radio" 
-                                                   name="verification[maquinaria][{{ $index }}][complies]" 
+                                                   name="machinery[{{ $field }}_condition]" 
                                                    value="0" 
-                                                   {{ old("verification.maquinaria.{$index}.complies") === '0' ? 'checked' : '' }}>
+                                                   {{ old("machinery.{$field}_condition") === '0' ? 'checked' : '' }}>
                                         </div>
                                     </td>
                                     <td>
                                         <input type="text" class="form-control form-control-sm" 
-                                               name="verification[maquinaria][{{ $index }}][notes]" 
-                                               value="{{ old("verification.maquinaria.{$index}.notes") }}">
+                                               name="machinery[{{ $field }}_notes]" 
+                                               value="{{ old("machinery.{$field}_notes") }}">
                                     </td>
                                 </tr>
                             @endforeach
@@ -231,43 +247,41 @@
                         <tbody>
                             @php
                                 $hygieneItems = [
-                                    'Espacios ordenados',
-                                    'Separación de productos (Elaborado / Materia Prima)',
-                                    'Descongelación en condiciones higiénicas',
-                                    'Desinfección correcta de los productos',
-                                    'Manipuladores libres de joyas o postizos',
-                                    'Instrucciones de desinfección seguidas',
-                                    'Productos de limpieza aislados de alimentos',
-                                    'Neveras a la temperatura correcta (4°C)',
-                                    'Alimentos en neveras a 4°C',
-                                    'Congeladores a la temperatura correcta (-18°C)',
-                                    'Alimentos en congelador a -18°C'
+                                    'personal_hygiene' => 'Higiene personal adecuada',
+                                    'uniform_cleanliness' => 'Limpieza del uniforme',
+                                    'hair_protection' => 'Protección del cabello',
+                                    'hand_washing' => 'Lavado de manos adecuado',
+                                    'food_handling' => 'Manejo adecuado de alimentos',
+                                    'waste_management' => 'Manejo de residuos',
+                                    'pest_control' => 'Control de plagas',
+                                    'cleaning_procedures' => 'Procedimientos de limpieza',
+                                    'chemical_storage' => 'Almacenamiento de químicos'
                                 ];
                             @endphp
 
-                            @foreach($hygieneItems as $index => $item)
+                            @foreach($hygieneItems as $field => $label)
                                 <tr>
-                                    <td>{{ $item }}</td>
+                                    <td>{{ $label }}</td>
                                     <td class="text-center">
                                         <div class="form-check d-flex justify-content-center">
                                             <input class="form-check-input" type="radio" 
-                                                   name="verification[higiene][{{ $index }}][complies]" 
+                                                   name="hygiene[{{ $field }}_compliant]" 
                                                    value="1" 
-                                                   {{ old("verification.higiene.{$index}.complies") === '1' ? 'checked' : '' }}>
+                                                   {{ old("hygiene.{$field}_compliant") === '1' ? 'checked' : '' }}>
                                         </div>
                                     </td>
                                     <td class="text-center">
                                         <div class="form-check d-flex justify-content-center">
                                             <input class="form-check-input" type="radio" 
-                                                   name="verification[higiene][{{ $index }}][complies]" 
+                                                   name="hygiene[{{ $field }}_compliant]" 
                                                    value="0" 
-                                                   {{ old("verification.higiene.{$index}.complies") === '0' ? 'checked' : '' }}>
+                                                   {{ old("hygiene.{$field}_compliant") === '0' ? 'checked' : '' }}>
                                         </div>
                                     </td>
                                     <td>
                                         <input type="text" class="form-control form-control-sm" 
-                                               name="verification[higiene][{{ $index }}][notes]" 
-                                               value="{{ old("verification.higiene.{$index}.notes") }}">
+                                               name="hygiene[{{ $field }}_notes]" 
+                                               value="{{ old("hygiene.{$field}_notes") }}">
                                     </td>
                                 </tr>
                             @endforeach
@@ -277,61 +291,28 @@
             </div>
         </div>
 
-        <!-- Sección 4: Registro de Auditoría -->
+        <!-- Sección de Notas Adicionales -->
         <div class="card shadow mb-4">
             <div class="card-header py-3 bg-primary text-white">
-                <h6 class="m-0 font-weight-bold">IV. ✍️ Registro de Auditoría</h6>
+                <h6 class="m-0 font-weight-bold">IV. 📝 Notas Adicionales</h6>
             </div>
             <div class="card-body">
                 <div class="form-group">
-                    <label for="incidencias_comentarios">Incidencias / Comentarios</label>
-                    <textarea class="form-control @error('incidencias_comentarios') is-invalid @enderror" 
-                              id="incidencias_comentarios" name="incidencias_comentarios" 
-                              rows="3">{{ old('incidencias_comentarios') }}</textarea>
-                    @error('incidencias_comentarios')
-                        <span class="invalid-feedback" role="alert">
-                            <strong>{{ $message }}</strong>
-                        </span>
-                    @enderror
+                    <label for="additional_notes">Observaciones Generales</label>
+                    <textarea class="form-control" id="additional_notes" name="additional_notes" rows="3">{{ old('additional_notes') }}</textarea>
                 </div>
+            </div>
+        </div>
 
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="responsable">Responsable</label>
-                            <input type="text" class="form-control @error('responsable') is-invalid @enderror" 
-                                   id="responsable" name="responsable" 
-                                   value="{{ old('responsable', auth()->user()->name) }}" required>
-                            @error('responsable')
-                                <span class="invalid-feedback" role="alert">
-                                    <strong>{{ $message }}</strong>
-                                </span>
-                            @enderror
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="supervisor">Supervisor</label>
-                            <input type="text" class="form-control @error('supervisor') is-invalid @enderror" 
-                                   id="supervisor" name="supervisor" 
-                                   value="{{ old('supervisor') }}" required>
-                            @error('supervisor')
-                                <span class="invalid-feedback" role="alert">
-                                    <strong>{{ $message }}</strong>
-                                </span>
-                            @enderror
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Guardar Auditoría
-                    </button>
-                    <a href="{{ route('audits.index') }}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> Cancelar
-                    </a>
-                </div>
+        <!-- Botón de Envío -->
+        <div class="row mb-4">
+            <div class="col-12 text-right">
+                <a href="{{ route('audits.index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Guardar Auditoría
+                </button>
             </div>
         </div>
     </form>
@@ -340,6 +321,8 @@
 
 @push('scripts')
 <script>
+
+    
     // Auto-select C (Conforme) for all radio buttons on load
     document.addEventListener('DOMContentLoaded', function() {
         // Set default values for radio buttons
@@ -405,3 +388,4 @@
     });
 </script>
 @endpush
+

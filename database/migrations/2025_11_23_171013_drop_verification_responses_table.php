@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
-        // Check if the table exists before trying to drop it
+        
         if (Schema::hasTable('verification_responses')) {
             Schema::drop('verification_responses');
         }
@@ -16,7 +16,7 @@ return new class extends Migration
 
     public function down()
     {
-        // Recreate the table structure if needed
+      
         Schema::create('verification_responses', function (Blueprint $table) {
             $table->id();
             $table->foreignId('audit_id')->constrained()->onDelete('cascade');

@@ -11,24 +11,24 @@ return new class extends Migration
         Schema::create('verification_responses', function (Blueprint $table) {
             $table->id();
             
-            // Relación con la auditoría
+
             $table->foreignId('audit_id')
                   ->constrained('audits')
                   ->onDelete('cascade');
             
-            // Relación con el ítem de verificación
+
             $table->foreignId('verification_item_id')
                   ->constrained('verification_items')
                   ->onDelete('cascade');
             
-            // Valores de respuesta
-            $table->enum('status', ['C', 'IC', 'NA'])->nullable(); // C = Cumple, IC = Incumple, NA = No aplica
-            $table->text('corrective_measure')->nullable(); // Medida correctora o comentario
-            $table->decimal('temperature', 8, 2)->nullable(); // Para ítems que requieren temperatura
+
+            $table->enum('status', ['C', 'IC', 'NA'])->nullable(); 
+            $table->text('corrective_measure')->nullable(); 
+            $table->decimal('temperature', 8, 2)->nullable(); 
             
             $table->timestamps();
             
-            // Asegurar que no haya respuestas duplicadas para el mismo ítem en la misma auditoría
+           
             $table->unique(['audit_id', 'verification_item_id']);
         });
     }

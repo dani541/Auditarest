@@ -33,11 +33,10 @@ public function indexAudi()
     return view('auditor.index', compact('audits'));
 }
  
-
 public function index()
 {
     $restaurants = Restaurant::with(['audits' => function($query) {
-        $query->with('auditor')->latest();
+        $query->latest(); // Remove ->with('auditor')
     }])->get();
 
     return view('admin.audits.index', compact('restaurants'));
@@ -84,73 +83,99 @@ public function create()
     return view('admin.audits.create', compact('restaurants', 'categories'));
 }
 
-    
-
-
-
-
-
-
    public function store(Request $request)
 {
-
+    // Validar los datos del formulario
     $validated = $request->validate([
         'restaurant_id' => 'required|exists:restaurants,id',
         'auditor' => 'required|string|max:255',
         'date' => 'required|date',
         'supervisor' => 'required|string|max:255',
-        'responsable' => 'required|string|max:255',
-        'incidencias_comentarios' => 'nullable|string',
-        'verification' => 'required|array',
+        'general_notes' => 'nullable|string',
+        'infrastructure' => 'required|array',
+        'machinery' => 'required|array',
+        'hygiene' => 'required|array',
     ]);
 
+    // Iniciar una transacción de base de datos
     DB::beginTransaction();
+
     try {
-        // Create the audit
+        // Crear la auditoría principal
         $audit = Audit::create([
             'restaurant_id' => $validated['restaurant_id'],
             'auditor' => $validated['auditor'],
             'date' => $validated['date'],
             'supervisor' => $validated['supervisor'],
-            'responsable' => $validated['responsable'],
-            'incidencias_comentarios' => $validated['incidencias_comentarios'] ?? null,
-            'status' => 'completada',
-            'auditor_id' => auth()->id(),
+            'general_notes' => $validated['general_notes'] ?? null,
+            'is_completed' => false,
+            'total_score' => 0
         ]);
 
-        // Save verification responses
-        foreach ($validated['verification'] as $section => $items) {
-            foreach ($items as $index => $item) {
-                // Find the verification item
-                $verificationItem = VerificationItem::where('category', strtoupper($section))
-                    ->where('order', $index + 1)
-                    ->first();
+        // Transformar los datos de infraestructura
+        $infrastructureData = $this->transformSectionData($validated['infrastructure']);
+        $audit->infrastructure()->create($infrastructureData);
 
-                if ($verificationItem) {
-                    VerificationResponse::create([
-                        'audit_id' => $audit->id,
-                        'verification_item_id' => $verificationItem->id,
-                        'complies' => (bool)($item['complies'] ?? false),
-                        'notes' => $item['notes'] ?? null,
-                        'value' => $item['value'] ?? null,
-                    ]);
-                }
-            }
-        }
+        // Transformar los datos de maquinaria
+        $machineryData = $this->transformSectionData($validated['machinery']);
+        $audit->machinery()->create($machineryData);
 
+        // Transformar los datos de higiene
+        $hygieneData = $this->transformSectionData($validated['hygiene']);
+        $audit->hygiene()->create($hygieneData);
+
+        // Confirmar la transacción
         DB::commit();
 
-        return redirect()->route('admin.audits.show', $audit)
-            ->with('success', 'Auditoría creada correctamente.');
+        return redirect()->route('audits.show', $audit)
+            ->with('success', 'Auditoría creada exitosamente.');
 
     } catch (\Exception $e) {
+        // Revertir la transacción en caso de error
         DB::rollBack();
         \Log::error('Error al crear la auditoría: ' . $e->getMessage());
-        return redirect()->back()
-            ->with('error', 'Error al crear la auditoría. Por favor, inténtelo de nuevo.')
-            ->withInput();
+        
+        return back()->withInput()
+            ->with('error', 'Error al crear la auditoría: ' . $e->getMessage());
     }
 }
+
+/**
+ * Transforma los datos de una sección al formato esperado por el modelo.
+ */
+private function transformSectionData(array $sectionData): array
+{
+    $transformed = [];
+    $processedFields = [];
+    
+    foreach ($sectionData as $key => $value) {
+        // Extract the base field name (e.g., 'floor' from 'floor_condition')
+        if (str_ends_with($key, '_condition')) {
+            $fieldName = str_replace('_condition', '', $key);
+            $transformed[$key] = (bool)$value;
+            $processedFields[] = $fieldName;
+        } elseif (str_ends_with($key, '_notes')) {
+            $fieldName = str_replace('_notes', '', $key);
+            $transformed[$key] = $value;
+            $processedFields[] = $fieldName;
+        }
+    }
+    
+    // Ensure all fields have both condition and notes, even if empty
+    $allFields = array_unique($processedFields);
+    foreach ($allFields as $field) {
+        if (!isset($transformed["{$field}_condition"])) {
+            $transformed["{$field}_condition"] = false;
+        }
+        if (!isset($transformed["{$field}_notes"])) {
+            $transformed["{$field}_notes"] = null;
+        }
+    }
+    
+    return $transformed;
+}
+
+
 
 /**
  * Save verification items for an audit

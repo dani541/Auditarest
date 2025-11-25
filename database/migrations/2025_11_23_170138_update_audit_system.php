@@ -8,14 +8,14 @@ return new class extends Migration
 {
     public function up()
 {
-    // Update audits table
+
     Schema::table('audits', function (Blueprint $table) {
-        // Rename scheduled_date to date if it exists
+
         if (Schema::hasColumn('audits', 'scheduled_date')) {
             $table->renameColumn('scheduled_date', 'date');
         }
         
-        // Add new fields if they don't exist
+        
         $columns = [
             'auditor' => 'string',
             'supervisor' => 'string',
@@ -30,12 +30,12 @@ return new class extends Migration
             }
         }
         
-        // Make category_id nullable
+ 
         if (Schema::hasColumn('audits', 'category_id')) {
             $table->unsignedBigInteger('category_id')->nullable()->change();
         }
         
-        // Add auditor_id if it doesn't exist
+     
         if (!Schema::hasColumn('audits', 'auditor_id')) {
             $table->foreignId('auditor_id')
                   ->nullable()

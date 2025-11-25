@@ -17,13 +17,12 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Insertar los ítems de verificación basados en las imágenes
+        
         $items = [
             // INFRAESTRUCTURA
             ['category' => 'INFRAESTRUCTURA', 'description' => 'MESAS DE TRABAJO SIN GRIETAS NI DESCORCHONES', 'order' => 1],
             ['category' => 'INFRAESTRUCTURA', 'description' => 'TABLAS DE CORTE EN BUEN ESTADO', 'order' => 2],
-            
-            // BUENAS PRÁCTICAS
+   
             ['category' => 'BUENAS_PRACTICAS', 'description' => 'LO ESPACIOS SE ENCUENTRAN ORDENADOS', 'order' => 1],
             ['category' => 'BUENAS_PRACTICAS', 'description' => 'SEPARACIÓN DE LOS PRODUCTOS', 'order' => 2],
             ['category' => 'BUENAS_PRACTICAS', 'description' => 'ELABORADO DE MATERIA PRIMA', 'order' => 3],

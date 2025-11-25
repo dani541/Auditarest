@@ -37,15 +37,15 @@
                                     @foreach($restaurant->audits as $audit)
                                     <tr>
                                         <td>{{ $audit->id }}</td>
-                                        <td>{{ $audit->scheduled_date->format('d/m/Y') }}</td>
-                                        <td>{{ $audit->auditor->name ?? 'N/A' }}</td>
+                                        <td>{{ $audit->date ? $audit->date->format('d/m/Y') : 'No especificada' }}</td>
+                                        <td>{{ $audit->auditor ?? 'No asignado' }}</td>
                                         <td>
                                             <span class="badge {{ $audit->status === 'completada' ? 'bg-success' : 'bg-warning' }}">
                                                 {{ ucfirst($audit->status) }}
                                             </span>
                                         </td>
                                         <td>
-                                            <a href="{{ route('admin.audits.show', ['audit' => $audit->id]) }}" 
+                                    <a href="{{ route('audits.show', $audit) }}" 
                                                class="btn btn-sm btn-info" title="Ver">
                                                 <i class="fas fa-eye"></i>
                                             </a>

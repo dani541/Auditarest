@@ -22,7 +22,7 @@ public function login(Request $request)
     ]);
 
     if (Auth::attempt($credentials)) {
-        $user = Auth::user()->load('role'); // Cargar la relación role
+        $user = Auth::user()->load('role'); 
         
         \Log::info('Login exitoso', [
             'user_id' => $user->id,
@@ -34,7 +34,7 @@ public function login(Request $request)
         } elseif ($user->hasRole('Auditor')) {
             return redirect('/admin/auditor/index');
         } else {
-            // Para usuarios con rol 'usuario' o sin rol definido
+            
             return redirect('/');
         }
     }
