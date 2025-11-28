@@ -4,9 +4,9 @@
 <div class="container mt-4">
     <h2 class="mb-4">Estadísticas de Auditorías</h2>
     
-    <div class="row">
+    <div class="row mb-4">
         <div class="col-md-8">
-            <div class="card shadow-sm">
+            <div class="card shadow-sm h-100">
                 <div class="card-body">
                     <h5 class="card-title">Auditorías por Mes</h5>
                     <canvas id="auditsChart" height="200"></canvas>
@@ -15,7 +15,7 @@
         </div>
         
         <div class="col-md-4">
-            <div class="card shadow-sm">
+            <div class="card shadow-sm h-100">
                 <div class="card-body">
                     <h5 class="card-title">Resumen</h5>
                     <div class="text-center py-4">
@@ -31,7 +31,7 @@
                                     <h6 class="mb-1">{{ $audit['name'] }}</h6>
                                     <small class="text-muted">{{ $audit['date'] }}</small>
                                 </div>
-                                <span class="badge bg-primary rounded-pill">{{ $audit['score'] }}</span>
+                                <span class="badge bg-primary rounded-pill">{{ number_format($audit['score'], 1) }}</span>
                             </a>
                             @endforeach
                         </div>
@@ -40,17 +40,81 @@
             </div>
         </div>
     </div>
+    <!--
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Distribución de Puntuaciones por Categoría</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="chart-container" style="position: relative; height: 350px; width: 100%;">
+                                @if(isset($isDemoData) && $isDemoData)
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle"></i> Se están mostrando datos de ejemplo. Agrega auditorías reales para ver los datos reales.
+                                    </div>
+                                @endif
+                                <canvas id="donutChart"></canvas>
+                                <div id="noDataMessage" class="text-center d-none" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                                    <i class="fas fa-chart-pie fa-3x text-muted mb-2"></i>
+                                    <p class="text-muted">No hay datos disponibles para mostrar</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mt-4">
+                                <h6>Detalles de Puntuación</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Categoría</th>
+                                                <th class="text-end">Puntuación</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($avgScores as $category => $data)
+                                            <tr>
+                                                <td>
+                                                    <span class="score-indicator" style="background-color: {{ $data['color'] }}"></span>
+                                                    {{ ucfirst($category) }}
+                                                </td>
+                                                <td class="text-end">
+                                                    <span class="fw-bold">{{ number_format($data['score'], 1) }}%</span>
+                                                </td>
+                                            </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>-->
 </div>
+
+@push('styles')
+<style>
+    .score-indicator {
+        width: 15px;
+        height: 15px;
+        display: inline-block;
+        margin-right: 5px;
+        border-radius: 3px;
+    }
+</style>
+@endpush
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Datos para el gráfico
+    // Gráfico de barras - Auditorías por mes
     const ctx = document.getElementById('auditsChart').getContext('2d');
-    
-    // Configuración del gráfico
-    const myChart = new Chart(ctx, {
+    const barChart = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: @json($monthNames),
@@ -74,6 +138,77 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+
+    // Gráfico de anillo - Distribución por categoría
+    const donutCtx = document.getElementById('donutChart');
+    const noDataMessage = document.getElementById('noDataMessage');
+    
+    // Asegurarse de que los datos sean números
+    const donutData = @json($radarData).map(Number);
+    const donutLabels = @json($radarLabels);
+    
+    // Verificar que hay datos para mostrar
+    console.log('Datos del gráfico:', donutData);
+    console.log('Etiquetas:', donutLabels);
+    console.log('Colores:', @json($radarBackgroundColors));
+    
+    if (donutCtx && donutData.length > 0 && donutData.some(value => value > 0)) {
+        // Ocultar mensaje de no datos
+        if (noDataMessage) noDataMessage.classList.add('d-none');
+        
+        // Crear el gráfico
+        new Chart(donutCtx, {
+            type: 'doughnut',
+            data: {
+                labels: donutLabels,
+                datasets: [{
+                    data: donutData,
+                    backgroundColor: @json($radarBackgroundColors),
+                    borderColor: @json($radarBorderColors),
+                    borderWidth: 1,
+                    hoverOffset: 15
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            boxWidth: 15,
+                            padding: 15,
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                return `${label}: ${value}%`;
+                            }
+                        }
+                    }
+                },
+                animation: {
+                    animateScale: true,
+                    animateRotate: true
+                }
+            }
+        });
+    } else {
+        // Mostrar mensaje si no hay datos
+        donutCtx.font = '16px Arial';
+        donutCtx.textAlign = 'center';
+        donutCtx.fillText('No hay datos disponibles', 150, 150);
+        console.warn('No hay datos suficientes para mostrar el gráfico');
+    }
 });
 </script>
 @endpush

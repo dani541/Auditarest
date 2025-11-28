@@ -59,11 +59,82 @@ class ReportController extends Controller
                 ];
             });
         
+        // Get average scores for each category with fallback to demo data if no records exist
+        $avgScores = [];
+        
+        // Check if we have any data in the tables
+        $hasInfrastructure = \App\Models\AuditInfrastructure::exists();
+        $hasMachinery = \App\Models\AuditMachinery::exists();
+        $hasHygiene = \App\Models\AuditHygiene::exists();
+        
+        // If no data exists, use demo data
+        $useDemoData = !($hasInfrastructure || $hasMachinery || $hasHygiene);
+        
+        if ($useDemoData) {
+            $avgScores = [
+                'infraestructura' => [
+                    'score' => rand(70, 95),
+                    'color' => 'rgba(54, 162, 235, 0.6)',
+                    'borderColor' => 'rgba(54, 162, 235, 1)'
+                ],
+                'maquinaria' => [
+                    'score' => rand(60, 90),
+                    'color' => 'rgba(255, 99, 132, 0.6)',
+                    'borderColor' => 'rgba(255, 99, 132, 1)'
+                ],
+                'higiene' => [
+                    'score' => rand(80, 98),
+                    'color' => 'rgba(75, 192, 192, 0.6)',
+                    'borderColor' => 'rgba(75, 192, 192, 1)'
+                ]
+            ];
+        } else {
+            // Use real data
+            $avgScores = [
+                'infraestructura' => [
+                    'score' => $hasInfrastructure ? (float)number_format(\App\Models\AuditInfrastructure::avg('percentage'), 2) : 0,
+                    'color' => 'rgba(54, 162, 235, 0.6)',
+                    'borderColor' => 'rgba(54, 162, 235, 1)'
+                ],
+                'maquinaria' => [
+                    'score' => $hasMachinery ? (float)number_format(\App\Models\AuditMachinery::avg('percentage'), 2) : 0,
+                    'color' => 'rgba(255, 99, 132, 0.6)',
+                    'borderColor' => 'rgba(255, 99, 132, 1)'
+                ],
+                'higiene' => [
+                    'score' => $hasHygiene ? (float)number_format(\App\Models\AuditHygiene::avg('percentage'), 2) : 0,
+                    'color' => 'rgba(75, 192, 192, 0.6)',
+                    'borderColor' => 'rgba(75, 192, 192, 1)'
+                ]
+            ];
+        }
+        
+        // Log the data being sent to the view
+        \Log::info('Chart Data:', [
+            'avgScores' => $avgScores,
+            'hasData' => !$useDemoData ? 'Real Data' : 'Demo Data'
+        ]);
+        
+        // Prepare data for the chart
+        $radarLabels = array_map('ucfirst', array_keys($avgScores));
+        $radarData = array_map(function($item) {
+            return (float)$item['score'];
+        }, $avgScores);
+        
+        $radarBackgroundColors = array_column($avgScores, 'color');
+        $radarBorderColors = array_column($avgScores, 'borderColor');
+        
         return view('admin.reports.index', [
             'totalAudits' => $totalAudits,
             'monthlyData' => $monthlyData,
             'monthNames' => $monthNames,
-            'recentAudits' => $recentAudits
+            'recentAudits' => $recentAudits,
+            'radarLabels' => $radarLabels,
+            'radarData' => $radarData,
+            'radarBackgroundColors' => $radarBackgroundColors,
+            'radarBorderColors' => $radarBorderColors,
+            'avgScores' => $avgScores,
+            'isDemoData' => $useDemoData
         ]);
     }
 
