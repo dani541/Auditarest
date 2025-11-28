@@ -135,7 +135,7 @@
     @endif
 
     <!-- Sección de Firma y Sello -->
-    <div class="card shadow-sm">
+  <!--  <div class="card shadow-sm">
         <div class="card-body text-center">
             <div class="row">
                 <div class="col-md-6 mb-3 mb-md-0">
@@ -159,5 +159,5 @@
             </div>
         </div>
     </div>
-</div>
+</div>-->
 @endsection

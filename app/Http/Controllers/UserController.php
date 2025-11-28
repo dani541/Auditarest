@@ -159,4 +159,12 @@ class UserController extends Controller
                 ->with('error', 'Error al eliminar el usuario: ' . $e->getMessage());
         }
     }
+
+
+    public function toggleStatus(User $user)
+{
+    $user->update(['is_active' => !$user->is_active]);
+    
+    return back()->with('success', 'Estado del usuario actualizado correctamente');
+}
 }

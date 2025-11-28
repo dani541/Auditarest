@@ -41,8 +41,8 @@
                         <th>Email</th>
                         <th>Rol</th>
                         <th>Restaurante Asignado</th>
-                        <th>Restaurantes Auditados</th>
-                        <th>Estado</th>
+                      <!--  <th>Restaurantes Auditados</th>-->
+                       <!-- <th>Estado</th>-->
                         <th class="text-end">Acciones</th>
                     </tr>
                 </thead>
@@ -64,7 +64,8 @@
                                     <span class="text-muted">No asignado</span>
                                 @endif
                             </td>
-                            <td>
+                          <!--  <td>
+                                
                                 @if($user->role->name === 'editor')
                                     <span class="badge bg-success">
                                         {{ $user->audited_restaurants_count }} restaurantes
@@ -72,34 +73,33 @@
                                 @else
                                     <span class="text-muted">N/A</span>
                                 @endif
-                            </td>
-                            <td>
+                            </td>-->
+                           <!-- <td>
                                 <span class="badge {{ $user->is_active ? 'bg-success' : 'bg-secondary' }}">
                                     {{ $user->is_active ? 'Activo' : 'Inactivo' }}
                                 </span>
-                            </td>
+                            </td>-->
                             <td class="text-end">
-                                <a href="{{ route('admin.users.edit', $user) }}" 
-                                   class="btn btn-sm btn-outline-primary me-1"
-                                   data-bs-toggle="tooltip" data-bs-placement="top" title="Editar">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <a href="{{ route('admin.users.show', $user) }}" 
-                                   class="btn btn-sm btn-outline-info me-1"
-                                   data-bs-toggle="tooltip" data-bs-placement="top" title="Ver Detalles">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                <button type="button" 
-                                        class="btn btn-sm btn-outline-danger"
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#deleteModal"
-                                        data-user-id="{{ $user->id }}"
-                                        data-user-name="{{ $user->name }}"
-                                        data-bs-toggle="tooltip" 
-                                        data-bs-placement="top" 
-                                        title="Eliminar">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
+                                <div class="d-flex gap-2 justify-content-end">
+                                    <!-- Botón Editar -->
+                                    <a href="{{ route('admin.users.edit', $user) }}" 
+                                       class="btn btn-sm btn-outline-primary"
+                                       data-bs-toggle="tooltip" 
+                                       data-bs-placement="top" 
+                                       title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+
+                                    <!-- Botón Eliminar con confirmación -->
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-danger"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#deleteModal"
+                                            data-user-id="{{ $user->id }}"
+                                            data-user-name="{{ $user->name }}">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     @empty

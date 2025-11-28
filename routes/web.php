@@ -178,3 +178,6 @@ Route::get('/audits/{audit}/export-pdf', [AuditController::class, 'exportPdf'])
 
 
 Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+
+Route::patch('/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])
+     ->name('admin.users.toggle-status');
