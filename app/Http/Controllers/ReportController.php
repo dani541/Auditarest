@@ -12,7 +12,59 @@ class ReportController extends Controller
 {
     public function index()
     {
-        return view('admin.reports.index');
+        // Get total number of audits
+        $totalAudits = \App\Models\Audit::count();
+        
+        // Get audits by month for the last 6 months
+        $sixMonthsAgo = now()->subMonths(5)->startOfMonth();
+        
+        $auditsByMonth = \App\Models\Audit::select(
+                DB::raw('MONTH(created_at) as month'),
+                DB::raw('YEAR(created_at) as year'),
+                DB::raw('COUNT(*) as count')
+            )
+            ->where('created_at', '>=', $sixMonthsAgo)
+            ->groupBy('year', 'month')
+            ->orderBy('year', 'asc')
+            ->orderBy('month', 'asc')
+            ->get();
+            
+        // Format the data for the chart
+        $monthlyData = [];
+        $monthNames = [];
+        
+        for ($i = 5; $i >= 0; $i--) {
+            $date = now()->subMonths($i);
+            $month = $date->format('n');
+            $year = $date->format('Y');
+            $monthNames[] = $date->format('M');
+            
+            $auditCount = $auditsByMonth->first(function($item) use ($month, $year) {
+                return $item->month == $month && $item->year == $year;
+            });
+            
+            $monthlyData[] = $auditCount ? $auditCount->count : 0;
+        }
+        
+        // Get recent audits
+        $recentAudits = \App\Models\Audit::with('restaurant')
+            ->latest()
+            ->take(5)
+            ->get()
+            ->map(function($audit) {
+                return [
+                    'name' => $audit->restaurant->name ?? 'Sin restaurante',
+                    'date' => $audit->created_at->format('d/m/Y'),
+                    'score' => $audit->total_score ?? 0
+                ];
+            });
+        
+        return view('admin.reports.index', [
+            'totalAudits' => $totalAudits,
+            'monthlyData' => $monthlyData,
+            'monthNames' => $monthNames,
+            'recentAudits' => $recentAudits
+        ]);
     }
 
     public function auditsByRestaurant(Request $request)

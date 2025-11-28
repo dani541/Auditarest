@@ -19,13 +19,21 @@
                 <div class="card-body">
                     <h5 class="card-title">Resumen</h5>
                     <div class="text-center py-4">
-                        <h1 class="display-4 text-primary" id="totalAudits">0</h1>
+                        <h1 class="display-4 text-primary" id="totalAudits">{{ number_format($totalAudits) }}</h1>
                         <p class="text-muted">Auditorías totales</p>
                     </div>
                     <div class="mt-3">
                         <h6>Últimas Auditorías</h6>
                         <div id="recentAudits" class="list-group list-group-flush">
-                            <!-- Se llenará con JavaScript -->
+                            @foreach($recentAudits as $audit)
+                            <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ $audit['name'] }}</h6>
+                                    <small class="text-muted">{{ $audit['date'] }}</small>
+                                </div>
+                                <span class="badge bg-primary rounded-pill">{{ $audit['score'] }}</span>
+                            </a>
+                            @endforeach
                         </div>
                     </div>
                 </div>
@@ -35,19 +43,20 @@
 </div>
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Datos de ejemplo
+    // Datos para el gráfico
     const ctx = document.getElementById('auditsChart').getContext('2d');
     
     // Configuración del gráfico
     const myChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+            labels: @json($monthNames),
             datasets: [{
                 label: 'Número de Auditorías',
-                data: [12, 19, 3, 5, 2, 3],
+                data: @json($monthlyData),
                 backgroundColor: 'rgba(54, 162, 235, 0.5)',
                 borderColor: 'rgba(54, 162, 235, 1)',
                 borderWidth: 1
@@ -57,35 +66,13 @@ document.addEventListener('DOMContentLoaded', function() {
             responsive: true,
             scales: {
                 y: {
-                    beginAtZero: true
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
                 }
             }
         }
-    });
-
-    // Datos de ejemplo para el resumen
-    document.getElementById('totalAudits').textContent = '44';
-    
-    // Ejemplo de auditorías recientes
-    const recentAudits = [
-        { name: 'Restaurante Central', date: '25/11/2025', score: 92 },
-        { name: 'Restaurante Norte', date: '24/11/2025', score: 85 },
-        { name: 'Restaurante Sur', date: '23/11/2025', score: 78 }
-    ];
-    
-    const recentAuditsList = document.getElementById('recentAudits');
-    recentAudits.forEach(audit => {
-        const item = document.createElement('a');
-        item.href = '#';
-        item.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
-        item.innerHTML = `
-            <div>
-                <h6 class="mb-1">${audit.name}</h6>
-                <small class="text-muted">${audit.date}</small>
-            </div>
-            <span class="badge bg-primary rounded-pill">${audit.score}</span>
-        `;
-        recentAuditsList.appendChild(item);
     });
 });
 </script>
