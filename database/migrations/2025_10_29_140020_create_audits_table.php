@@ -9,38 +9,27 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
+    public function up()
     {
         Schema::create('audits', function (Blueprint $table) {
             $table->id();
-            $table->date('scheduled_date');
-            $table->enum('status', ['pendiente', 'en_curso', 'completada', 'vencida'])->default('pendiente');
-            
-            // FK: Auditor asignado (usuario_id)
-            $table->foreignId('user_id')
-                  ->constrained('users')
-                  ->onDelete('restrict')
-                  ->comment('Auditor asignado a esta auditoría');
-
-            // FK: Restaurante auditado
-            $table->foreignId('restaurant_id')
-                  ->constrained('restaurants')
-                  ->onDelete('cascade');
-
-            // FK: Categoría de la auditoría (higiene, calidad, etc.)
-            $table->foreignId('category_id')
-                  ->constrained('categories')
-                  ->onDelete('restrict');
-
+            $table->foreignId('restaurant_id')->constrained()->after('id');
+            $table->string('auditor');
+            $table->date('date');
+            $table->string('supervisor');
+            $table->text('general_notes')->nullable();
+            $table->boolean('is_completed')->default(false);
+            $table->decimal('total_score', 5, 2)->nullable();
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
+    public function down()
     {
+        Schema::table('audits', function (Blueprint $table) {
+            $table->dropForeign(['restaurant_id']);
+        });
+        
         Schema::dropIfExists('audits');
     }
 };

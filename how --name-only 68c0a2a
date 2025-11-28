@@ -1,0 +1,17 @@
+[33m95d2a96[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{0}: checkout: moving from 28-11 to main
+[33m68c0a2a[m[33m ([m[1;32m28-11[m[33m)[m HEAD@{1}: commit: Redireccion,cambios visuales y correcion de edicion de usuarios
+[33mebc596c[m[33m ([m[1;31morigin/28-11[m[33m)[m HEAD@{2}: commit: Corregido inseerciones de auditoria
+[33m5310e75[m HEAD@{3}: commit: Cambios (no funciona insertar audit00)
+[33m77fc7c3[m[33m ([m[1;31morigin/25-11_Mas_nueva[m[33m, [m[1;32m25-11_Mas_nueva[m[33m)[m HEAD@{4}: checkout: moving from 25-11_Mas_nueva to 28-11
+[33m77fc7c3[m[33m ([m[1;31morigin/25-11_Mas_nueva[m[33m, [m[1;32m25-11_Mas_nueva[m[33m)[m HEAD@{5}: commit: Mejora en la vista de detalle de auditorías
+[33m02c71d7[m HEAD@{6}: commit: Mas cambios
+[33mf5ae600[m[33m ([m[1;31morigin/fix/25-11-2025[m[33m, [m[1;32mfix/25-11-2025[m[33m)[m HEAD@{7}: checkout: moving from fix/25-11-2025 to 25-11_Mas_nueva
+[33mf5ae600[m[33m ([m[1;31morigin/fix/25-11-2025[m[33m, [m[1;32mfix/25-11-2025[m[33m)[m HEAD@{8}: commit: Fix: Corregir errores en la creación de auditorías
+[33m14a2333[m[33m ([m[1;31morigin/23/11/2025[m[33m, [m[1;32m23/11/2025[m[33m)[m HEAD@{9}: checkout: moving from 23/11/2025 to fix/25-11-2025
+[33m14a2333[m[33m ([m[1;31morigin/23/11/2025[m[33m, [m[1;32m23/11/2025[m[33m)[m HEAD@{10}: commit: Mejora de login, audiwiew y creacion de formualrio de auditoria
+[33ma771f21[m[33m ([m[1;31morigin/rama-22/11[m[33m, [m[1;32mrama-22/11[m[33m)[m HEAD@{11}: checkout: moving from rama-22/11 to 23/11/2025
+[33ma771f21[m[33m ([m[1;31morigin/rama-22/11[m[33m, [m[1;32mrama-22/11[m[33m)[m HEAD@{12}: commit: Corrección de rutas y vistas de auditorías
+[33mf865099[m[33m ([m[1;31morigin/desarrollo[m[33m, [m[1;32mdesarrollo[m[33m)[m HEAD@{13}: checkout: moving from desarrollo to rama-22/11
+[33mf865099[m[33m ([m[1;31morigin/desarrollo[m[33m, [m[1;32mdesarrollo[m[33m)[m HEAD@{14}: commit: Primer commit en rama desarrollo
+[33m2c7c58c[m[33m ([m[1;31morigin/master[m[33m, [m[1;32mmaster[m[33m)[m HEAD@{15}: checkout: moving from master to desarrollo
+[33m2c7c58c[m[33m ([m[1;31morigin/master[m[33m, [m[1;32mmaster[m[33m)[m HEAD@{16}: commit (initial): Formulario creacion usuario y landin page

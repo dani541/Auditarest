@@ -10,6 +10,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Estilos personalizados -->
     <style>
         body {
@@ -65,83 +67,96 @@
 <body>
     <!-- Barra de navegación -->
     <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{{ route('admin.dashboard') }}">
-                <i class="fas fa-clipboard-check me-2"></i>AuditaRest
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('admin.dashboard') }}">
-                            <i class="fas fa-tachometer-alt me-1"></i> Dashboard
-                        </a>
-                    </li>
-                </ul>
-                <ul class="navbar-nav">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user-circle me-1"></i> {{ Auth::user()->name }}
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Perfil</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                                    <i class="fas fa-sign-out-alt me-2"></i>Cerrar sesión
-                                </a>
-                                <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                                    @csrf
-                                </form>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{{ route('landing') }}" aria-label="Inicio">
+            <i class="fas fa-clipboard-check me-2"></i>AuditaRest
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('admin.dashboard') }}" aria-label="Dashboard">
+                        <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+                    </a>
+                </li>
+            </ul>
+            <ul class="navbar-nav">
+                @auth
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">
+                        <i class="fas fa-user-circle me-1"></i> {{ Auth::user()->name }}
+                        <i class="fas fa-caret-down ms-1"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                        <li>
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button type="submit" class="dropdown-item" aria-label="Cerrar sesión">
+                                    <i class="fas fa-sign-out-alt me-2"></i> Cerrar sesión
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </li>
+                @else
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('login') }}" aria-label="Iniciar sesión">
+                        <i class="fas fa-sign-in-alt me-1"></i> Iniciar sesión
+                    </a>
+                </li>
+                @endauth
+            </ul>
         </div>
-    </nav>
+    </div>
+</nav>
 
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            <nav class="col-md-2 d-none d-md-block sidebar">
-                <div class="sidebar-sticky">
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">
-                                <i class="fas fa-tachometer-alt me-2"></i> Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('admin.restaurants.*') ? 'active' : '' }}" href="{{ route('admin.restaurants.index') }}">
-                                <i class="fas fa-utensils me-2"></i> Restaurantes
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('admin.audits.*') ? 'active' : '' }}" href="#">
-                                <i class="fas fa-clipboard-list me-2"></i> Auditorías
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}" href="#">
-                                <i class="fas fa-users me-2"></i> Usuarios
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}" href="#">
-                                <i class="fas fa-tags me-2"></i> Categorías
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">
-                                <i class="fas fa-chart-bar me-2"></i> Reportes
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
+ <!-- Barra de navegación lateral -->
+<nav class="col-md-2 d-none d-md-block sidebar">
+
+    <div class="sidebar-sticky">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link pe-none" style="cursor: default;">
+                    <i class="fas fa-tachometer-alt me-2"></i> Menú
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('admin.restaurants.*') ? 'active' : '' }}" 
+                   href="{{ route('admin.restaurants.index') }}">
+                    <i class="fas fa-utensils me-2"></i> Restaurantes
+                </a>
+            </li>
+            <li class="nav-item">
+                <!--
+                <a class="nav-link {{ request()->routeIs('audits.*') ? 'active' : '' }}" 
+                href="{{ route('audits.index') }}">
+                    <i class="fas fa-clipboard-list me-2"></i> Auditorías
+                </a> -->
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}" 
+                   href="{{ route('admin.users.index') }}">
+                    <i class="fas fa-users me-2"></i> Usuarios
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link {{ request()->is('reports*') ? 'active' : '' }}" 
+                href="{{ route('reports.index') }}">
+                    <i class="fas fa-chart-bar me-2"></i> Informes
+                </a>
+            </li>
+            
+            
+        </ul>
+    </div>
+ 
+</nav>
 
             <!-- Contenido principal -->
             <main role="main" class="col-md-10 ms-sm-auto px-4">

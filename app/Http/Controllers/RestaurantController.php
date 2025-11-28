@@ -13,16 +13,23 @@ class RestaurantController extends Controller
     /**
      * Mostrar una lista de restaurantes.
      */
+    /*
     public function index()
     {
         try {
-            $restaurants = Restaurant::all();
+            $restaurants = Restaurant::orderBy('name')->paginate(10);
             return view('admin.restaurants.index', compact('restaurants'));
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Error al cargar la lista de restaurantes: ' . $e->getMessage());
         }
     }
-
+    */
+    public function index()
+{
+    $restaurants = Restaurant::orderBy('name')->paginate(10);
+    $cities = Restaurant::select('city')->distinct()->orderBy('city')->pluck('city');
+    return view('admin.restaurants.index', compact('restaurants', 'cities'));
+}
     /**
      * Mostrar el formulario para crear un nuevo restaurante.
      */
@@ -46,26 +53,21 @@ class RestaurantController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
         }
 
         try {
             $restaurant = Restaurant::create($request->all());
-
-            return response()->json([
-                'success' => true,
-                'data' => $restaurant,
-                'message' => 'Restaurante creado exitosamente'
-            ], 201);
+            
+            return redirect()->route('admin.restaurants.index')
+                ->with('success', 'Restaurante creado exitosamente');
+                
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al crear el restaurante',
-                'error' => $e->getMessage()
-            ], 500);
+            return redirect()->back()
+                ->with('error', 'Error al crear el restaurante: ' . $e->getMessage())
+                ->withInput();
         }
     }
 
@@ -98,17 +100,11 @@ class RestaurantController extends Controller
         try {
             $restaurant = Restaurant::findOrFail($id);
             
-            return response()->json([
-                'success' => true,
-                'data' => $restaurant
-            ]);
+            return view('admin.restaurants.edit', compact('restaurant'));
             
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Restaurante no encontrado',
-                'error' => $e->getMessage()
-            ], 404);
+            return redirect()->route('admin.restaurants.index')
+                ->with('error', 'Restaurante no encontrado: ' . $e->getMessage());
         }
     }
 
@@ -118,43 +114,41 @@ class RestaurantController extends Controller
     public function update(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'sometimes|required|string|max:255',
-            'address' => 'sometimes|required|string|max:255',
-            'city' => 'sometimes|required|string|max:100',
-            'contact_name' => 'sometimes|required|string|max:100',
-            'contact_phone' => 'sometimes|required|string|max:20',
-            'contact_email' => 'sometimes|required|email|unique:restaurants,contact_email,' . $id,
+            'name' => 'required|string|max:255',
+            'address' => 'required|string|max:255',
+            'city' => 'required|string|max:100',
+            'postal_code' => 'nullable|string|max:10',
+            'contact_name' => 'required|string|max:100',
+            'contact_phone' => 'required|string|max:20',
+            'contact_email' => 'required|email|unique:restaurants,contact_email,' . $id,
+            'opening_hours' => 'nullable|string',
+            'description' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
         }
 
         try {
             $restaurant = Restaurant::findOrFail($id);
             $restaurant->update($request->all());
 
-            return response()->json([
-                'success' => true,
-                'data' => $restaurant,
-                'message' => 'Restaurante actualizado exitosamente'
-            ]);
+            return redirect()->route('admin.restaurants.edit', $restaurant->id)
+                ->with('success', '¡Los datos del restaurante se han actualizado correctamente!');
             
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al actualizar el restaurante',
-                'error' => $e->getMessage()
-            ], 500);
+            return redirect()->back()
+                ->with('error', 'Error al actualizar el restaurante: ' . $e->getMessage())
+                ->withInput();
         }
     }
 
     /**
      * Eliminar un restaurante.
      */
+    /*
     public function destroy($id)
     {
         DB::beginTransaction();
@@ -188,8 +182,35 @@ class RestaurantController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    } */
+public function destroy($id)
+{
+    DB::beginTransaction();
+    try {
+        $restaurant = Restaurant::findOrFail($id);
+        
+        // Eliminar auditorías asociadas
+        $restaurant->audits()->delete();
+        
+        // Luego eliminar el restaurante
+        $restaurant->delete();
+        
+        DB::commit();
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Restaurante y sus auditorías eliminados exitosamente'
+        ]);
+        
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json([
+            'success' => false,
+            'message' => 'Error al eliminar el restaurante',
+            'error' => $e->getMessage()
+        ], 500);
     }
-
+}
     /**
      * Generar PDF para un restaurante específico.
      */
@@ -237,4 +258,10 @@ class RestaurantController extends Controller
         }
     }
 
+
+
+
+    /**
+     * 
+     */
 }

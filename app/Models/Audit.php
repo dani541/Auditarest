@@ -1,33 +1,31 @@
 <?php
 
 namespace App\Models;
-use HasFactory;
+
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Audit extends Model
 {
-    //
-
     protected $fillable = [
-        'scheduled_date',
-        'status',
-        'user_id',       // FK: auditor
-        'restaurant_id', // FK: restaurante
-        'category_id',   // FK: categoría
+        'restaurant_id',
+        'auditor',
+        'date',
+        'supervisor',
+        'general_notes',
+        'is_completed',
+        'total_score'
     ];
 
-    // --- Relaciones ---
+    protected $casts = [
+        'date' => 'date',
+        'is_completed' => 'boolean',
+        'total_score' => 'decimal:2'
+    ];
 
     /**
-     * La Auditoría está asignada a un Auditor. (FK: user_id)
-     */
-    public function auditor(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'user_id');
-    }
-
-    /**
-     * La Auditoría se realiza a un Restaurante. (FK: restaurant_id)
+     * Obtiene el restaurante asociado a la auditoría.
      */
     public function restaurant(): BelongsTo
     {
@@ -35,34 +33,144 @@ class Audit extends Model
     }
 
     /**
-     * La Auditoría es de una Categoría específica. (FK: category_id)
+     * Obtiene la infraestructura evaluada en la auditoría.
      */
-    public function category(): BelongsTo
+    public function infrastructure(): HasOne
     {
-        return $this->belongsTo(Category::class);
+        return $this->hasOne(AuditInfrastructure::class);
     }
 
     /**
-     * Una Auditoría tiene muchas Respuestas.
+     * Obtiene la maquinaria evaluada en la auditoría.
      */
-    public function responses(): HasMany
+    public function machinery(): HasOne
     {
-        return $this->hasMany(Response::class);
+        return $this->hasOne(AuditMachinery::class);
     }
 
     /**
-     * Una Auditoría tiene muchas Evidencias.
+     * Obtiene la evaluación de higiene de la auditoría.
      */
-    public function evidences(): HasMany
+    public function hygiene(): HasOne
     {
-        return $this->hasMany(Evidence::class);
+        return $this->hasOne(AuditHygiene::class);
     }
 
+    /**
+     * Obtiene el usuario que realizó la auditoría.
+     */
+  /*  public function auditorUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'auditor_id');
+    }*/
 
+           public function auditor()
+   {
+       return $this->belongsTo(User::class, 'auditor_id');
+   }
 
+    /**
+     * Obtiene el supervisor de la auditoría.
+     */
+    public function supervisorUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'supervisor_id');
+    }
 
+    // In app/Models/Audit.php
 
+    public function verificationItems()
+    {
+        return $this->hasMany(VerificationItem::class);
+    }
 
+    /**
+     * Calcula el puntaje total de la auditoría.
+     */
+    public function calculateTotalScore(): void
+    {
+        $total = 0;
+        $count = 0;
+        
+        // Sumar los puntajes de todas las secciones
+        foreach (['infrastructure', 'machinery', 'hygiene'] as $relation) {
+            if ($this->$relation && $this->$relation->total_score !== null) {
+                $total += $this->$relation->total_score;
+                $count++;
+            }
+        }
+        
+        // Calcular el promedio si hay secciones con puntaje
+        $this->total_score = $count > 0 ? round($total / $count, 2) : null;
+        $this->save();
+    }
+
+    /**
+     * Marca la auditoría como completada.
+     */
+    public function markAsCompleted(): void
+    {
+        $this->is_completed = true;
+        $this->completed_at = now();
+        $this->save();
+    }
+
+    /**
+     * Obtiene el progreso de la auditoría.
+     */
+   public function getProgressAttribute()
+{
+    $sections = ['infrastructure', 'machinery', 'hygiene'];
+    $completed = 0;
+    
+    foreach ($sections as $section) {
+        if ($this->$section && $this->$section->isCompleted()) {
+            $completed++;
+        }
+    }
+    
+    // Fix: Remove the $ before count
+    return count($sections) > 0 ? (int) (($completed / count($sections)) * 100) : 0;
 }
 
-// Registro de auditorías realizadas por los Auditores a los Restaurantes.
+    /**
+     * Scope para obtener auditorías completadas.
+     */
+    public function scopeCompleted($query)
+    {
+        return $query->where('is_completed', true);
+    }
+
+    /**
+     * Scope para obtener auditorías pendientes.
+     */
+    public function scopePending($query)
+    {
+        return $query->where('is_completed', false);
+    }
+
+    /**
+     * Obtiene el estado de la auditoría.
+     */
+    public function getStatusAttribute(): string
+    {
+        if ($this->is_completed) {
+            return 'Completada';
+        }
+        
+        $progress = $this->progress;
+        
+        if ($progress === 0) {
+            return 'Pendiente';
+        } elseif ($progress < 100) {
+            return 'En progreso';
+        }
+        
+        return 'Pendiente de revisión';
+    }
+
+
+
+
+    
+}
