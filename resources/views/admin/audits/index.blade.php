@@ -29,7 +29,7 @@
                                         <th>ID</th>
                                         <th>Fecha</th>
                                         <th>Auditor</th>
-                                        <th>Estado</th>
+                                      <!--  <th>Estado</th> -->
                                         <th>Acciones</th>
                                     </tr>
                                 </thead>
@@ -39,12 +39,13 @@
                                         <td>{{ $audit->id }}</td>
                                         <td>{{ $audit->date ? $audit->date->format('d/m/Y') : 'No especificada' }}</td>
                                         <td>{{ $audit->auditor ?? 'No asignado' }}</td>
-                                        <td>
+                                    <!--    <td>
                                             
                                             <span class="badge {{ $audit->status === 'completada' ? 'bg-success' : 'bg-warning' }}">
                                                 {{ ucfirst($audit->status) }}
                                             </span>
-                                        </td>
+                                            
+                                        </td>-->
                                         <td>
                                        <a href="{{ route('audits.show', $audit->id) }}"
                                         class="btn btn-sm btn-info" title="Ver">
