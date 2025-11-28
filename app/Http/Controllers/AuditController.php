@@ -86,7 +86,7 @@ public function create()
     
     return view('admin.audits.create', compact('restaurants', 'categories'));
 }
-
+/*
    public function store(Request $request)
 {
     // Validar los datos del formulario
@@ -156,6 +156,72 @@ public function create()
             ->with('error', 'Error al crear la auditoría: ' . $e->getMessage());
     }
 }
+*/
+
+public function store(Request $request)
+{
+    \Log::info('Datos recibidos del formulario:', $request->all());
+
+    try {
+        // Validar los datos del formulario
+        $validated = $request->validate([
+            'restaurant_id' => 'required|exists:restaurants,id',
+            'auditor' => 'required|string|max:255',
+            'date' => 'required|date',
+            'supervisor' => 'required|string|max:255',
+            'general_notes' => 'nullable|string',
+            'infrastructure' => 'required|array',
+            'machinery' => 'required|array',
+            'hygiene' => 'required|array',
+        ]);
+
+        \Log::info('Datos validados:', $validated);
+
+        // Iniciar una transacción de base de datos
+        DB::beginTransaction();
+
+        // Crear la auditoría principal
+        $audit = Audit::create([
+            'restaurant_id' => $validated['restaurant_id'],
+            'auditor' => $validated['auditor'],
+            'date' => $validated['date'],
+            'supervisor' => $validated['supervisor'],
+            'general_notes' => $validated['general_notes'] ?? null,
+            'is_completed' => false,
+            'total_score' => 0
+        ]);
+
+        \Log::info('Auditoría creada:', $audit->toArray());
+
+        // Guardar las secciones de la auditoría
+        $sections = ['infrastructure', 'machinery', 'hygiene'];
+        foreach ($sections as $section) {
+            if (isset($validated[$section])) {
+                $sectionData = $this->transformSectionData($validated[$section]);
+                $audit->$section()->create($sectionData);
+                \Log::info("Sección {$section} creada:", $sectionData);
+            }
+        }
+
+        // Confirmar la transacción
+        DB::commit();
+
+        return redirect()->route('audits.show', $audit)
+            ->with('success', 'Auditoría creada exitosamente.');
+
+    } catch (\Exception $e) {
+        // Revertir la transacción en caso de error
+        DB::rollBack();
+        \Log::error('Error al crear la auditoría: ' . $e->getMessage());
+        \Log::error($e->getTraceAsString());
+        
+        return back()->withInput()
+            ->with('error', 'Error al crear la auditoría: ' . $e->getMessage());
+    }
+}
+
+
+
 
 /**
  * Transforma los datos de una sección al formato esperado por el modelo.
