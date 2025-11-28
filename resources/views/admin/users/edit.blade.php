@@ -77,15 +77,19 @@
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label class="form-label">Rol <span class="text-danger">*</span></label>
-                            <select class="form-select @error('role') is-invalid @enderror" name="role" required>
-                                <option value="user" {{ old('role', $user->role) == 'user' ? 'selected' : '' }}>Usuario</option>
-                                <option value="admin" {{ old('role', $user->role) == 'admin' ? 'selected' : '' }}>Administrador</option>
+                            <select class="form-select @error('role_id') is-invalid @enderror" name="role_id" required>
+                                <option value="">Seleccionar Rol</option>
+                                @foreach($roles as $role)
+                                    <option value="{{ $role->id }}" {{ old('role_id', $user->role_id) == $role->id ? 'selected' : '' }}>
+                                        {{ ucfirst($role->name) }}
+                                    </option>
+                                @endforeach
                             </select>
-                            @error('role')
+                            @error('role_id')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-
+                                                <!--
                         <div class="mb-3">
                             <label class="form-label">Estado <span class="text-danger">*</span></label>
                             <select class="form-select @error('is_active') is-invalid @enderror" name="is_active" required>
@@ -96,6 +100,7 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
+                        -->
                     </div>
                 </div>
 

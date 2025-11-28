@@ -96,6 +96,7 @@ class UserController extends Controller
     /**
      * Show the form for editing the specified user.
      */
+    /*
     public function edit($id)
     {
         try {
@@ -107,11 +108,19 @@ class UserController extends Controller
             return redirect()->route('admin.users.index')
                 ->with('error', 'Usuario no encontrado: ' . $e->getMessage());
         }
-    }
+    }*/
+
+        public function edit($id)
+{
+    $user = User::findOrFail($id);
+    $roles = Role::whereIn('name', ['Administrador', 'Auditor'])->get();
+    
+    return view('admin.users.edit', compact('user', 'roles'));
+}
 
     /**
      * Update the specified user in storage.
-     */
+     *//*
     public function update(Request $request, $id)
     {
         $user = User::findOrFail($id);
@@ -134,7 +143,32 @@ class UserController extends Controller
 
         return redirect()->route('admin.users.index')
             ->with('success', 'Usuario actualizado correctamente');
-    }
+    }*/
+
+            public function update(Request $request, $id)
+            {
+                $user = User::findOrFail($id);
+                
+                $validated = $request->validate([
+                    'name' => 'required|string|max:100',
+                    'email' => 'required|email|unique:users,email,' . $id,
+                    'role_id' => 'required|exists:roles,id',
+                    'password' => 'nullable|min:8|confirmed',
+                ]);
+
+                $user->name = $validated['name'];
+                $user->email = $validated['email'];
+                $user->role_id = $validated['role_id'];
+                
+                if (!empty($validated['password'])) {
+                    $user->password = Hash::make($validated['password']);
+                }
+                
+                $user->save();
+
+                return redirect()->route('admin.users.index')
+                    ->with('success', 'Usuario actualizado correctamente');
+            }
 
     /**
      * Remove the specified user from storage.

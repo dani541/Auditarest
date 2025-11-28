@@ -12,7 +12,7 @@
                     <tr>
                         <th>Restaurante</th>
                         <th>Última Auditoría</th>
-                        <th>Estado</th>
+                       <!-- <th>Estado</th> -->
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -21,11 +21,11 @@
                         <tr>
                             <td>{{ $audit->restaurant->name }}</td>
                             <td>{{ $audit->created_at->format('d/m/Y H:i') }}</td>
-                            <td>
+                         <!--   <td>
                                 <span class="badge bg-{{ $audit->status === 'completada' ? 'success' : 'warning' }}">
                                     {{ ucfirst($audit->status) }}
                                 </span>
-                            </td>
+                            </td>-->
                             <td>
                                 <a href="{{ route('audits.show', $audit->id) }}" 
                                    class="btn btn-sm btn-primary">

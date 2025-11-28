@@ -40,7 +40,7 @@
                         <th>Nombre</th>
                         <th>Email</th>
                         <th>Rol</th>
-                        <th>Restaurante Asignado</th>
+                     <!--   <th>Restaurante Asignado</th>-->
                       <!--  <th>Restaurantes Auditados</th>-->
                        <!-- <th>Estado</th>-->
                         <th class="text-end">Acciones</th>
@@ -57,13 +57,13 @@
                                     {{ $user->role->name }}
                                 </span>
                             </td>
-                            <td>
+                           <!-- <td>
                                 @if($user->restaurant)
                                     {{ $user->restaurant->name }}
                                 @else
                                     <span class="text-muted">No asignado</span>
                                 @endif
-                            </td>
+                            </td>-->
                           <!--  <td>
                                 
                                 @if($user->role->name === 'editor')

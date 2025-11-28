@@ -206,7 +206,7 @@ public function store(Request $request)
         // Confirmar la transacción
         DB::commit();
 
-        return redirect()->route('audits.show', $audit)
+        return redirect()->route('auditor.dashboard', $audit)
             ->with('success', 'Auditoría creada exitosamente.');
 
     } catch (\Exception $e) {

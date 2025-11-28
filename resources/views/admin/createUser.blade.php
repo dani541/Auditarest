@@ -147,7 +147,7 @@
                             </div>
                         @enderror
                     </div>
-
+                    <!--
                     <div class="mb-3">
                         <label class="form-label">Restaurante (opcional):</label>
                         <select name="restaurant_id" class="form-select">
@@ -159,7 +159,7 @@
                             @endforeach
                         </select>
                     </div>
-
+                    -->
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                         <a href="{{ url()->previous() }}" class="btn btn-secondary me-md-2">Cancelar</a>
                         <button type="submit" class="btn btn-primary">Crear Usuario</button>

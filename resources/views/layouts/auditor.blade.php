@@ -56,12 +56,12 @@
     @stack('styles')
 </head>
 <body>
-    <!-- Barra de navegación -->
+ 
     <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
         <div class="container-fluid">
-            <a class="navbar-brand" href="{{ route('auditor.index') }}" aria-label="Inicio">
+            <p class="navbar-brand" href="{{ route('auditor.index') }}" aria-label="Inicio">
                 <i class="fas fa-clipboard-check me-2"></i>AuditaRest - Auditor
-            </a>
+            </p>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item dropdown">

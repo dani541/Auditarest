@@ -13,6 +13,7 @@ class RestaurantController extends Controller
     /**
      * Mostrar una lista de restaurantes.
      */
+    /*
     public function index()
     {
         try {
@@ -22,7 +23,13 @@ class RestaurantController extends Controller
             return redirect()->back()->with('error', 'Error al cargar la lista de restaurantes: ' . $e->getMessage());
         }
     }
-
+    */
+    public function index()
+{
+    $restaurants = Restaurant::orderBy('name')->paginate(10);
+    $cities = Restaurant::select('city')->distinct()->orderBy('city')->pluck('city');
+    return view('admin.restaurants.index', compact('restaurants', 'cities'));
+}
     /**
      * Mostrar el formulario para crear un nuevo restaurante.
      */
@@ -141,6 +148,7 @@ class RestaurantController extends Controller
     /**
      * Eliminar un restaurante.
      */
+    /*
     public function destroy($id)
     {
         DB::beginTransaction();
@@ -174,8 +182,35 @@ class RestaurantController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    } */
+public function destroy($id)
+{
+    DB::beginTransaction();
+    try {
+        $restaurant = Restaurant::findOrFail($id);
+        
+        // Eliminar auditorías asociadas
+        $restaurant->audits()->delete();
+        
+        // Luego eliminar el restaurante
+        $restaurant->delete();
+        
+        DB::commit();
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Restaurante y sus auditorías eliminados exitosamente'
+        ]);
+        
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json([
+            'success' => false,
+            'message' => 'Error al eliminar el restaurante',
+            'error' => $e->getMessage()
+        ], 500);
     }
-
+}
     /**
      * Generar PDF para un restaurante específico.
      */
@@ -223,4 +258,10 @@ class RestaurantController extends Controller
         }
     }
 
+
+
+
+    /**
+     * 
+     */
 }

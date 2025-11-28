@@ -40,6 +40,7 @@
                                         <td>{{ $audit->date ? $audit->date->format('d/m/Y') : 'No especificada' }}</td>
                                         <td>{{ $audit->auditor ?? 'No asignado' }}</td>
                                         <td>
+                                            
                                             <span class="badge {{ $audit->status === 'completada' ? 'bg-success' : 'bg-warning' }}">
                                                 {{ ucfirst($audit->status) }}
                                             </span>

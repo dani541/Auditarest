@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container-fluid px-4">
-    <!-- Encabezado con título y botón de acción -->
+
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center py-4">
         <div>
             <h1 class="h3 mb-0">
@@ -34,10 +34,10 @@
                 </div>
             </div>
         </div>
-        <!-- Puedes agregar más tarjetas de estadísticas aquí -->
+
     </div>
 
-    <!-- Barra de búsqueda y filtros -->
+   
     <div class="card mb-4">
         <div class="card-body">
             <div class="row g-3">
@@ -47,6 +47,7 @@
                         <input type="text" class="form-control" id="searchInput" placeholder="Buscar restaurantes...">
                     </div>
                 </div>
+                
                 <div class="col-md-3">
                     <select class="form-select" id="filterCity">
                         <option value="">Todas las ciudades</option>
@@ -69,13 +70,13 @@
     <!-- Lista de restaurantes -->
     <div class="row" id="restaurantsContainer">
         @forelse($restaurants as $restaurant)
-        <div class="col-12 col-md-6 col-xl-4 mb-4">
+        <div class="col-12 col-md-6 col-xl-4 mb-4" data-created-at="{{ $restaurant->created_at }}">
             <div class="card h-100 shadow-sm hover-shadow-lg transition-all">
                 <div class="position-relative">
                     <div class="position-absolute top-0 end-0 m-3">
-                        <span class="badge bg-{{ $restaurant->is_active ? 'success' : 'secondary' }} rounded-pill">
+                       <!-- <span class="badge bg-{{ $restaurant->is_active ? 'success' : 'secondary' }} rounded-pill">
                             {{ $restaurant->is_active ? 'Activo' : 'Inactivo' }}
-                        </span>
+                        </span> -->
                     </div>
                     <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 180px;">
                         <i class="fas fa-store fa-4x text-muted"></i>
@@ -188,7 +189,7 @@
         @endforelse
     </div>
 
-    <!-- Paginación -->
+
     @if($restaurants->hasPages())
     <div class="row mt-4">
         <div class="col-12">
@@ -200,7 +201,7 @@
     @endif
 </div>
 
-<!-- Botón flotante para móviles -->
+
 <div class="d-block d-lg-none fixed-bottom text-end mb-4 me-4">
     <a href="{{ route('admin.restaurants.create') }}" 
        class="btn btn-primary btn-lg rounded-circle shadow-lg d-inline-flex align-items-center justify-content-center"
@@ -250,7 +251,7 @@
     }
 </style>
 @endpush
-
+<!--
 @push('scripts')
 <script>
     // Activar tooltips
@@ -299,6 +300,104 @@
         searchInput.addEventListener('input', filterRestaurants);
         filterCity.addEventListener('change', filterRestaurants);
         sortBy.addEventListener('change', filterRestaurants);
+    });
+</script>
+@endpush-->
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Referencias a los elementos del DOM
+        const searchInput = document.getElementById('searchInput');
+        const filterCity = document.getElementById('filterCity');
+        const sortBy = document.getElementById('sortBy');
+        const restaurantsContainer = document.getElementById('restaurantsContainer');
+        let restaurantCards = Array.from(document.querySelectorAll('#restaurantsContainer > .col-12'));
+
+        // Función para extraer la ciudad del texto de ubicación
+        function extractCity(locationText) {
+            // Eliminar espacios en blanco y convertir a minúsculas
+            const text = locationText.trim().toLowerCase();
+            // Dividir por comas y obtener el último elemento (la ciudad)
+            const parts = text.split(',');
+            return parts[parts.length - 1].trim();
+        }
+
+        // Función para formatear la fecha
+        function formatDate(dateString) {
+            // Si la fecha ya es un objeto Date, devolverlo directamente
+            if (dateString instanceof Date) return dateString;
+            
+            // Intentar convertir la cadena de fecha a un objeto Date
+            const date = new Date(dateString);
+            
+            // Si la conversión falla, devolver la fecha actual
+            return isNaN(date.getTime()) ? new Date() : date;
+        }
+
+        function filterAndSortRestaurants() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const cityFilter = filterCity.value.toLowerCase();
+            const sortValue = sortBy.value;
+
+            // Filtrar restaurantes
+            const filteredCards = restaurantCards.filter(card => {
+                const name = card.querySelector('.card-title').textContent.toLowerCase();
+                const locationElement = card.querySelector('.fa-map-marker-alt').parentNode;
+                const locationText = locationElement.textContent;
+                const city = extractCity(locationText);
+                
+                const matchesSearch = name.includes(searchTerm);
+                const matchesCity = cityFilter === '' || city.includes(cityFilter);
+                
+                // Para depuración
+                console.log('Restaurante:', name, '| Ciudad extraída:', city, '| Filtro ciudad:', cityFilter, '| Coincide:', matchesCity);
+                
+                return matchesSearch && matchesCity;
+            });
+
+            // Ordenar restaurantes
+            filteredCards.sort((a, b) => {
+                const nameA = a.querySelector('.card-title').textContent.toLowerCase();
+                const nameB = b.querySelector('.card-title').textContent.toLowerCase();
+                
+                // Obtener fechas de creación
+                const dateA = formatDate(a.getAttribute('data-created-at'));
+                const dateB = formatDate(b.getAttribute('data-created-at'));
+
+                switch(sortValue) {
+                    case 'name_asc':
+                        return nameA.localeCompare(nameB);
+                    case 'name_desc':
+                        return nameB.localeCompare(nameA);
+                    case 'recent':
+                        // Ordenar por fecha más reciente primero
+                        return dateB - dateA;
+                    default:
+                        return 0;
+                }
+            });
+
+            // Actualizar la vista
+            restaurantsContainer.innerHTML = '';
+            filteredCards.forEach(card => {
+                restaurantsContainer.appendChild(card);
+            });
+        }
+
+        // Event listeners para los filtros
+        searchInput.addEventListener('input', filterAndSortRestaurants);
+        filterCity.addEventListener('change', filterAndSortRestaurants);
+        sortBy.addEventListener('change', filterAndSortRestaurants);
+
+        // Llamar a la función al cargar
+        filterAndSortRestaurants();
     });
 </script>
 @endpush
