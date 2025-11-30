@@ -5,7 +5,7 @@ use App\Http\Controllers\RestaurantController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\ReportController;
-
+use App\Http\Controllers\ContactController;
 use App\Models\User;
 
 // Rutas de autenticación
@@ -181,3 +181,5 @@ Route::get('/reports', [ReportController::class, 'index'])->name('reports.index'
 
 Route::patch('/users/{user}/toggle-status', [UserController::class, 'toggleStatus'])
      ->name('admin.users.toggle-status');
+
+Route::post('/contacto', [ContactController::class, 'submit'])->name('contact.submit');

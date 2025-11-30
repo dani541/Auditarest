@@ -190,51 +190,60 @@
         </div>
     </div>
 
-    <!-- Contact Section -->
-    <div id="contact" class="bg-gray-50 py-16 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-7xl mx-auto">
-            <div class="text-center">
-                <h2 class="text-3xl font-extrabold text-gray-900 sm:text-4xl">
-                    Contáctanos
-                </h2>
-                <p class="mt-4 text-lg leading-6 text-gray-500">
-                    ¿Tienes preguntas? Estamos aquí para ayudarte.
-                </p>
-            </div>
-            <div class="mt-12">
-                <div class="bg-white py-8 px-6 shadow rounded-lg sm:px-10">
-                    <form action="#" method="POST" class="mb-0 space-y-6">
-                        <div>
-                            <label for="name" class="block text-sm font-medium text-gray-700">Nombre</label>
-                            <div class="mt-1">
-                                <input type="text" name="name" id="name" required class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                            </div>
-                        </div>
+<div id="contact" class="bg-gray-50 py-16 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+        <div class="text-center">
+            <h2 class="text-3xl font-extrabold text-gray-900 sm:text-4xl">
+                Contáctanos
+            </h2>
+            <p class="mt-4 text-lg leading-6 text-gray-500">
+                ¿Tienes preguntas? Estamos aquí para ayudarte.
+            </p>
+        </div>
+        <div class="mt-12">
+            <div class="bg-white py-8 px-6 shadow rounded-lg sm:px-10">
+                @if(session('success'))
+                    <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
+                        <span class="block sm:inline">{{ session('success') }}</span>
+                    </div>
+                @endif
 
-                        <div>
-                            <label for="email" class="block text-sm font-medium text-gray-700">Correo electrónico</label>
-                            <div class="mt-1">
-                                <input id="email" name="email" type="email" required class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                            </div>
+                <form action="{{ route('contact.submit') }}" method="POST" class="mb-0 space-y-6">
+                    @csrf
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700">Nombre</label>
+                        <div class="mt-1">
+                            <input type="text" name="name" id="name" required 
+                                   class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                         </div>
+                    </div>
 
-                        <div>
-                            <label for="message" class="block text-sm font-medium text-gray-700">Mensaje</label>
-                            <div class="mt-1">
-                                <textarea id="message" name="message" rows="4" required class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></textarea>
-                            </div>
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700">Correo electrónico</label>
+                        <div class="mt-1">
+                            <input id="email" name="email" type="email" required 
+                                   class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
                         </div>
+                    </div>
 
-                        <div>
-                            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                Enviar mensaje
-                            </button>
+                    <div>
+                        <label for="message" class="block text-sm font-medium text-gray-700">Mensaje</label>
+                        <div class="mt-1">
+                            <textarea id="message" name="message" rows="4" required 
+                                      class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></textarea>
                         </div>
-                    </form>
-                </div>
+                    </div>
+
+                    <div>
+                        <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Enviar mensaje
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
+</div>
 
     <!-- Footer -->
     <footer class="bg-white">

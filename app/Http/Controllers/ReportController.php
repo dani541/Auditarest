@@ -194,7 +194,7 @@ class ReportController extends Controller
             'isDemoData' => $useDemoData
         ]);
     }
->>>>>>> 30-11
+
 
     public function auditsByRestaurant(Request $request)
     {

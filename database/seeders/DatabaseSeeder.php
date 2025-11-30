@@ -20,13 +20,23 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
         ]);
 
-        // Create admin user
-        User::create([
-            'name' => 'Administrador',
-            'email' => 'admin@example.com',
-            'password' => bcrypt('password'),
-            'role_id' => 1, // ID del rol administrador
-        ]);
+        // Create admin user if not exists
+        if (!User::where('email', 'admin@example.com')->exists()) {
+            User::create([
+                'name' => 'Administrador',
+                'email' => 'admin@example.com',
+                'password' => bcrypt('password'),
+                'role_id' => 1, // ID del rol administrador
+            ]);
+        }
+
+        // Only seed test data in local environment
+        if (app()->environment('local')) {
+            $this->call([
+                TestDataSeeder::class,
+                AuditTypeSeeders::class,
+            ]);
+        }
 
 
                 User::create([
