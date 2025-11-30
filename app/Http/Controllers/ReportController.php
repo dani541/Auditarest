@@ -10,8 +10,9 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReportController extends Controller
 {
-    
+    /*
     public function index()
+<<<<<<< HEAD
 {
     // Obtener datos para el gráfico de auditorías por mes
     $auditsByMonth = Audit::select(
@@ -64,7 +65,136 @@ class ReportController extends Controller
     ]);
 }
 
+  */      
+
+    public function index()
+    {
+        // Get total number of audits
+        $totalAudits = \App\Models\Audit::count();
         
+        // Get audits by month for the last 6 months
+        $sixMonthsAgo = now()->subMonths(5)->startOfMonth();
+        
+        $auditsByMonth = \App\Models\Audit::select(
+                DB::raw('MONTH(created_at) as month'),
+                DB::raw('YEAR(created_at) as year'),
+                DB::raw('COUNT(*) as count')
+            )
+            ->where('created_at', '>=', $sixMonthsAgo)
+            ->groupBy('year', 'month')
+            ->orderBy('year', 'asc')
+            ->orderBy('month', 'asc')
+            ->get();
+            
+        // Format the data for the chart
+        $monthlyData = [];
+        $monthNames = [];
+        
+        for ($i = 5; $i >= 0; $i--) {
+            $date = now()->subMonths($i);
+            $month = $date->format('n');
+            $year = $date->format('Y');
+            $monthNames[] = $date->format('M');
+            
+            $auditCount = $auditsByMonth->first(function($item) use ($month, $year) {
+                return $item->month == $month && $item->year == $year;
+            });
+            
+            $monthlyData[] = $auditCount ? $auditCount->count : 0;
+        }
+        
+        // Get recent audits
+        $recentAudits = \App\Models\Audit::with('restaurant')
+            ->latest()
+            ->take(5)
+            ->get()
+            ->map(function($audit) {
+                return [
+                    'name' => $audit->restaurant->name ?? 'Sin restaurante',
+                    'date' => $audit->created_at->format('d/m/Y'),
+                    'score' => $audit->total_score ?? 0
+                ];
+            });
+        
+        // Get average scores for each category with fallback to demo data if no records exist
+        $avgScores = [];
+        
+        // Check if we have any data in the tables
+        $hasInfrastructure = \App\Models\AuditInfrastructure::exists();
+        $hasMachinery = \App\Models\AuditMachinery::exists();
+        $hasHygiene = \App\Models\AuditHygiene::exists();
+        
+        // If no data exists, use demo data
+        $useDemoData = !($hasInfrastructure || $hasMachinery || $hasHygiene);
+        
+        if ($useDemoData) {
+            $avgScores = [
+                'infraestructura' => [
+                    'score' => rand(70, 95),
+                    'color' => 'rgba(54, 162, 235, 0.6)',
+                    'borderColor' => 'rgba(54, 162, 235, 1)'
+                ],
+                'maquinaria' => [
+                    'score' => rand(60, 90),
+                    'color' => 'rgba(255, 99, 132, 0.6)',
+                    'borderColor' => 'rgba(255, 99, 132, 1)'
+                ],
+                'higiene' => [
+                    'score' => rand(80, 98),
+                    'color' => 'rgba(75, 192, 192, 0.6)',
+                    'borderColor' => 'rgba(75, 192, 192, 1)'
+                ]
+            ];
+        } else {
+            // Use real data
+            $avgScores = [
+                'infraestructura' => [
+                    'score' => $hasInfrastructure ? (float)number_format(\App\Models\AuditInfrastructure::avg('percentage'), 2) : 0,
+                    'color' => 'rgba(54, 162, 235, 0.6)',
+                    'borderColor' => 'rgba(54, 162, 235, 1)'
+                ],
+                'maquinaria' => [
+                    'score' => $hasMachinery ? (float)number_format(\App\Models\AuditMachinery::avg('percentage'), 2) : 0,
+                    'color' => 'rgba(255, 99, 132, 0.6)',
+                    'borderColor' => 'rgba(255, 99, 132, 1)'
+                ],
+                'higiene' => [
+                    'score' => $hasHygiene ? (float)number_format(\App\Models\AuditHygiene::avg('percentage'), 2) : 0,
+                    'color' => 'rgba(75, 192, 192, 0.6)',
+                    'borderColor' => 'rgba(75, 192, 192, 1)'
+                ]
+            ];
+        }
+        
+        // Log the data being sent to the view
+        \Log::info('Chart Data:', [
+            'avgScores' => $avgScores,
+            'hasData' => !$useDemoData ? 'Real Data' : 'Demo Data'
+        ]);
+        
+        // Prepare data for the chart
+        $radarLabels = array_map('ucfirst', array_keys($avgScores));
+        $radarData = array_map(function($item) {
+            return (float)$item['score'];
+        }, $avgScores);
+        
+        $radarBackgroundColors = array_column($avgScores, 'color');
+        $radarBorderColors = array_column($avgScores, 'borderColor');
+        
+        return view('admin.reports.index', [
+            'totalAudits' => $totalAudits,
+            'monthlyData' => $monthlyData,
+            'monthNames' => $monthNames,
+            'recentAudits' => $recentAudits,
+            'radarLabels' => $radarLabels,
+            'radarData' => $radarData,
+            'radarBackgroundColors' => $radarBackgroundColors,
+            'radarBorderColors' => $radarBorderColors,
+            'avgScores' => $avgScores,
+            'isDemoData' => $useDemoData
+        ]);
+    }
+>>>>>>> 30-11
 
     public function auditsByRestaurant(Request $request)
     {

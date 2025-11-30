@@ -14,7 +14,6 @@ Auditarest es una aplicación web para la gestión y realización de auditorías
 - Gestión completa de restaurantes y sus datos
 - Realización de auditorías con diferentes categorías y preguntas
 - Generación de informes en PDF
-- Envío de informes por correo electrónico
 - Panel de administración para gestión de usuarios y restaurantes
 - Interfaz intuitiva y responsiva con TailwindCSS
 
@@ -23,8 +22,8 @@ Auditarest es una aplicación web para la gestión y realización de auditorías
 - PHP >= 8.1
 - Composer
 - Node.js >= 16.0.0
-- npm o yarn
-- Base de datos SQLite (incluida) o MySQL/PostgreSQL
+- Chart.js
+- Base de datos MySQL
 
 ## 🚀 Instalación
 
@@ -90,11 +89,11 @@ Se crean automáticamente con los seeders:
 - **Backend**: Laravel 10.x
 - **Frontend**: 
   - TailwindCSS para estilos
-  - Vite como bundler
   - Alpine.js para interacciones
-- **Base de datos**: SQLite (configurable a MySQL/PostgreSQL)
+- **Base de datos**: MySQL
 - **Generación de PDF**: DomPDF
 - **Autenticación**: Laravel Breeze
+- **Graficos**: Chart.js
 
 ## 📄 Licencia
 
