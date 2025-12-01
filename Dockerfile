@@ -1,7 +1,6 @@
 FROM php:8.1-apache
 
 # Instala dependencias del sistema
-# Instala dependencias del sistema
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -13,12 +12,12 @@ RUN apt-get update && apt-get install -y \
     unzip \
     nodejs \
     npm \
-    libpq-dev \        # Añade esta línea
-    postgresql-client  # Opcional: para comandos de cliente
+    libpq-dev \
+    postgresql-client
 
 # Instala extensiones de PHP
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg
-RUN docker-php-ext-install -j$(nproc) pdo pdo_pgsql gd zip exif  # Reordenado
+RUN docker-php-ext-install -j$(nproc) pdo pdo_pgsql gd zip exif
 
 
 # Habilita mod_rewrite
