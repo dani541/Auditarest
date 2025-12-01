@@ -1,6 +1,10 @@
 # Usa la imagen oficial de PHP con Apache
 FROM php:8.1-apache
 
+# Variables de entorno para Composer
+ENV COMPOSER_MEMORY_LIMIT=-1
+ENV COMPOSER_ALLOW_SUPERUSER=1
+
 # Instala dependencias del sistema
 RUN apt-get update && apt-get install -y \
     git \
@@ -12,15 +16,23 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     libpq-dev \
-    postgresql-client
+    postgresql-client \
+    libonig-dev \
+    libxml2-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Instala Node.js
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
-    apt-get install -y nodejs
-
-# Instala extensiones de PHP
+# Configura extensiones de PHP
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg
-RUN docker-php-ext-install -j$(nproc) pdo pdo_pgsql gd zip exif
+RUN docker-php-ext-install -j$(nproc) \
+    pdo \
+    pdo_pgsql \
+    gd \
+    zip \
+    exif \
+    mbstring \
+    xml \
+    fileinfo \
+    tokenizer
 
 # Habilita mod_rewrite
 RUN a2enmod rewrite
@@ -31,26 +43,28 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Configura el directorio de trabajo
 WORKDIR /var/www/html
 
-# Copia solo los archivos necesarios primero
+# Copia solo los archivos necesarios primero para mejor caché
 COPY composer.json composer.lock ./
 
-# Instala dependencias de PHP
-RUN composer install --no-dev --no-interaction --optimize-autoloader --no-scripts
+# Instala dependencias de PHP con reintento
+RUN composer install --no-dev --no-interaction --optimize-autoloader --no-scripts || \
+    (rm -rf vendor/* && composer install --no-dev --no-interaction --optimize-autoloader --no-scripts)
 
 # Copia el resto de los archivos
 COPY . .
 
 # Instala dependencias de Node.js
-RUN npm install --production
-
-# Construye los assets
-RUN npm run build
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs && \
+    npm install --production && \
+    npm run build
 
 # Configura los permisos
-RUN chown -R www-data:www-data /var/www/html/storage
-RUN chmod -R 775 /var/www/html/storage
+RUN chown -R www-data:www-data /var/www/html/storage && \
+    chmod -R 775 /var/www/html/storage && \
+    chmod -R 775 /var/www/html/bootstrap/cache
 
-# Crea el archivo de configuración de Apache
+# Configuración de Apache
 RUN echo '<VirtualHost *:80>\n\
     ServerAdmin webmaster@localhost\n\
     DocumentRoot /var/www/html/public\n\
@@ -69,6 +83,11 @@ RUN echo '<VirtualHost *:80>\n\
         RewriteRule ^ index.php [L]\n\
     </Directory>\n\
 </VirtualHost>' > /etc/apache2/sites-available/000-default.conf
+
+# Limpia la caché
+RUN php artisan config:clear && \
+    php artisan cache:clear && \
+    php artisan view:clear
 
 # Expone el puerto 80
 EXPOSE 80
