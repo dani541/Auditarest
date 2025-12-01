@@ -14,10 +14,11 @@ RUN apt-get update && apt-get install -y \
     gnupg2 \
     && docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd zip
 
-# Configura el repositorio de Node.js 18.x
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+# Configura el repositorio de Node.js 20.x
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
-    && npm install -g npm@latest
+    && corepack enable \
+    && corepack prepare pnpm@latest --activate
 
 # Habilita mod_rewrite de Apache
 RUN a2enmod rewrite
@@ -31,8 +32,11 @@ COPY vite.config.js ./
 COPY tailwind.config.js ./
 COPY postcss.config.js ./
 
-# Instala dependencias de Node.js
-RUN npm install
+# Instala pnpm globalmente
+RUN npm install -g pnpm
+
+# Instala dependencias de Node.js usando pnpm
+RUN pnpm install
 
 # Copia el resto de la aplicación
 COPY . .
@@ -44,7 +48,7 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 # Construye los assets
-RUN npm run build
+RUN pnpm run build
 
 # Establece los permisos
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
