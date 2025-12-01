@@ -4,28 +4,10 @@ services:
     env: php
     region: oregon
     buildCommand: |
-      # Actualizar e instalar dependencias del sistema
-      apt-get update && apt-get install -y \
-          git \
-          curl \
-          libpng-dev \
-          libjpeg-dev \
-          libfreetype6-dev \
-          libzip-dev \
-          zip \
-          unzip \
-          nodejs \
-          npm
-      
-      # Instalar Composer
-      curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-      
       # Instalar dependencias de PHP
-      docker-php-ext-configure gd --with-freetype --with-jpeg
-      docker-php-ext-install -j$(nproc) gd pdo_mysql zip exif
-      
-      # Instalar dependencias de la aplicación
       composer install --no-dev --optimize-autoloader --no-interaction
+      
+      # Instalar dependencias de Node.js
       npm install
       npm run build
       
@@ -44,13 +26,13 @@ services:
       - key: APP_URL
         fromHost: true
       - key: DB_CONNECTION
-        value: pgsql  # Cambiado a pgsql para Render
+        value: pgsql
       - key: DB_HOST
         fromDatabase:
           name: auditarest-db
           property: hostname
       - key: DB_PORT
-        value: '5432'  # Puerto por defecto de PostgreSQL
+        value: '5432'
       - key: DB_DATABASE
         fromDatabase:
           name: auditarest-db
@@ -67,11 +49,11 @@ services:
         value: stderr
       - key: LOG_LEVEL
         value: debug
-      - key: NODE_VERSION
-        value: 18.x
 
 databases:
   - name: auditarest-db
     databaseName: auditarest
     user: auditarest_user
     plan: free
+    engine: postgres
+    version: "14"
