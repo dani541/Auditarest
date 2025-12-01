@@ -14,9 +14,14 @@ RUN apt-get update && apt-get install -y \
     gnupg2 \
     && docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd zip
 
-# Instala Node.js 20.x
+# Limpia la caché de apt
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Instala Node.js 20.x y npm
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs
+    && apt-get install -y nodejs \
+    && npm install -g npm@latest \
+    && npm cache clean --force
 
 # Habilita mod_rewrite de Apache
 RUN a2enmod rewrite
@@ -31,7 +36,7 @@ COPY tailwind.config.js ./
 COPY postcss.config.js ./
 
 # Instala dependencias de Node.js
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 # Copia el resto de la aplicación
 COPY . .
@@ -42,8 +47,8 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Instala dependencias de PHP
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Construye los assets
-RUN npm run build
+# Construye los assets con modo detallado
+RUN npm run build -- --debug
 
 # Establece los permisos
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
