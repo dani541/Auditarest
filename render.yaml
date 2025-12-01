@@ -4,9 +4,13 @@ services:
     env: php
     region: oregon
     buildCommand: |
+      # Instalar PHP y dependencias necesarias
+      curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+      # Instalar dependencias
       composer install --no-dev --optimize-autoloader --no-interaction
       npm install
       npm run build
+      # Configuración de caché
       php artisan config:cache
       php artisan route:cache
       php artisan view:cache
@@ -40,7 +44,10 @@ services:
         fromDatabase:
           name: auditarest-db
           property: password
-
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: LOG_LEVEL
+        value: debug
 databases:
   - name: auditarest-db
     databaseName: auditarest
