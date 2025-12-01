@@ -75,6 +75,27 @@ class ReportController extends Controller
         // Get audits by month for the last 6 months
         $sixMonthsAgo = now()->subMonths(5)->startOfMonth();
         
+        // Log para depuración
+        \Log::info('Fechas de consulta:', [
+            'fecha_actual' => now()->toDateTimeString(),
+            'seis_meses_atras' => $sixMonthsAgo->toDateTimeString(),
+            'mes_actual' => now()->format('Y-m'),
+            'mes_anterior' => now()->subMonth()->format('Y-m')
+        ]);
+        
+        // Obtener todos los meses disponibles en la base de datos para depuración
+        $availableMonths = \App\Models\Audit::select(
+                DB::raw('DISTINCT YEAR(created_at) as year'),
+                DB::raw('MONTH(created_at) as month'),
+                DB::raw('DATE_FORMAT(MIN(created_at), "%Y-%m") as month_str')
+            )
+            ->groupBy('year', 'month')
+            ->orderBy('year', 'asc')
+            ->orderBy('month', 'asc')
+            ->get();
+            
+        \Log::info('Meses disponibles en la base de datos:', $availableMonths->toArray());
+        
         $auditsByMonth = \App\Models\Audit::select(
                 DB::raw('MONTH(created_at) as month'),
                 DB::raw('YEAR(created_at) as year'),
@@ -86,21 +107,46 @@ class ReportController extends Controller
             ->orderBy('month', 'asc')
             ->get();
             
+        \Log::info('Resultado de la consulta por mes:', $auditsByMonth->toArray());
+            
         // Format the data for the chart
         $monthlyData = [];
         $monthNames = [];
         
-        for ($i = 5; $i >= 0; $i--) {
-            $date = now()->subMonths($i);
-            $month = $date->format('n');
-            $year = $date->format('Y');
+        // Obtener el rango de los últimos 6 meses
+        $endDate = now()->endOfMonth();
+        $startDate = now()->subMonths(5)->startOfMonth();
+        
+        // Log para depuración
+        \Log::info('Rango de fechas para el gráfico:', [
+            'inicio' => $startDate->toDateString(),
+            'fin' => $endDate->toDateString()
+        ]);
+        
+        // Crear un array con todos los meses en el rango
+        $period = new \DatePeriod(
+            $startDate,
+            new \DateInterval('P1M'),
+            $endDate
+        );
+        
+        foreach ($period as $date) {
+            $month = (int)$date->format('n');
+            $year = (int)$date->format('Y');
             $monthNames[] = $date->format('M');
             
+            // Buscar si hay datos para este mes
             $auditCount = $auditsByMonth->first(function($item) use ($month, $year) {
-                return $item->month == $month && $item->year == $year;
+                return (int)$item->month === $month && (int)$item->year === $year;
             });
             
             $monthlyData[] = $auditCount ? $auditCount->count : 0;
+            
+            // Log para depuración
+            \Log::info("Procesando mes: {$date->format('Y-m')}", [
+                'encontrado' => $auditCount ? 'Sí' : 'No',
+                'conteo' => $auditCount ? $auditCount->count : 0
+            ]);
         }
         
         // Get recent audits
