@@ -10,14 +10,24 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     zip \
     unzip \
-    nodejs \
-    npm \
     libpq-dev \
     postgresql-client
 
-# Instala extensiones de PHP
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg
-RUN docker-php-ext-install -j$(nproc) pdo pdo_pgsql gd zip exif
+# Instala Node.js
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs
+
+# Instala dependencias de PHP
+RUN composer install --no-dev --no-interaction --optimize-autoloader --no-scripts
+
+# Instala dependencias de Node.js
+RUN npm install --production
+
+# Construye los assets
+RUN npm run build
+
+# Ejecuta los scripts de post-instalación
+RUN composer run-script post-autoload-dump
 
 
 # Habilita mod_rewrite
