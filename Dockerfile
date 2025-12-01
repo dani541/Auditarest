@@ -3,14 +3,13 @@ FROM php:8.1-apache
 ENV COMPOSER_MEMORY_LIMIT=-1
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
-# --- FASE 1: Instalación de Dependencias del Sistema y Herramientas ---
-
+# --- DEPENDENCIAS DEL SISTEMA ---
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
     curl \
     libpng-dev \
-    libjpeg-dev \
+    libjpeg62-turbo-dev \
     libfreetype6-dev \
     libzip-dev \
     zip \
@@ -20,33 +19,36 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Instalar Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# --- FASE 2: Configuración de PHP y Extensiones (DIAGNÓSTICO) ---
-
+# --- CONFIGURACIÓN PHP ---
 RUN { \
     echo 'memory_limit = -1'; \
     echo 'max_execution_time = 600'; \
     echo 'max_input_time = 600'; \
 } > /usr/local/etc/php/conf.d/memory.ini
 
-# 1. Configurar GD (¡Necesario!)
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg
+# --- EXTENSIONES PHP CORRECTAS ---
+# Configurar GD con rutas correctas
+RUN docker-php-ext-configure gd \
+    --with-freetype=/usr/include/ \
+    --with-jpeg=/usr/include/
 
-# 2. Instalar extensiones de Base de Datos (Falla si falta libpq-dev)
-RUN docker-php-ext-install pdo pdo_pgsql
+# Instalar extensiones
+RUN docker-php-ext-install -j$(nproc) \
+    pdo \
+    pdo_pgsql \
+    mbstring \
+    xml \
+    gd \
+    zip \
+    exif \
+    fileinfo
 
-# 3. Instalar extensiones de texto y XML (Falla si falta libonig-dev o libxml2-dev)
-RUN docker-php-ext-install mbstring xml tokenizer
-
-# 4. Instalar extensiones de Imagen y Compresión (Falla si faltan las librerías de GD/Zip)
-RUN docker-php-ext-install gd zip exif fileinfo
-
-# --- FASE 3: Instalación de Dependencias PHP (Composer) ---
-# ... (El resto del Dockerfile sigue igual)
-
+# --- DEPENDENCIAS PHP (COMPOSER) ---
 COPY composer.json composer.lock ./
 
 RUN composer install --no-dev --no-interaction --optimize-autoloader --prefer-dist || \
@@ -57,19 +59,21 @@ RUN composer install --no-dev --no-interaction --optimize-autoloader --prefer-di
 
 RUN [ -f "vendor/autoload.php" ] || { echo "Error: La instalación de dependencias falló."; exit 1; }
 
-# --- FASE 4: Archivos de Aplicación y Frontend ---
+# --- ARCHIVOS DE LA APLICACIÓN ---
 COPY . .
 
+# --- NODEJS + BUILD FRONTEND ---
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
     apt-get install -y nodejs && \
     npm install --production && \
     npm run build
 
-# --- FASE 5: Permisos y Configuración de Apache ---
+# --- PERMISOS ---
 RUN chown -R www-data:www-data /var/www/html/storage && \
     chmod -R 775 /var/www/html/storage && \
     chmod -R 775 /var/www/html/bootstrap/cache
 
+# --- CONFIG APACHE ---
 RUN a2enmod rewrite
 
 RUN echo '<VirtualHost *:80>\n\
@@ -91,6 +95,7 @@ RUN echo '<VirtualHost *:80>\n\
     </Directory>\n\
 </VirtualHost>' > /etc/apache2/sites-available/000-default.conf
 
+# --- LIMPIEZA CACHÉ LARAVEL ---
 RUN if [ -f "artisan" ]; then \
     php artisan config:clear && \
     php artisan cache:clear && \
@@ -98,4 +103,5 @@ RUN if [ -f "artisan" ]; then \
     fi
 
 EXPOSE 80
+
 CMD ["apache2-foreground"]
