@@ -1,21 +1,10 @@
 services:
   - type: web
     name: auditarest
-    env: php
+    env: docker
     region: oregon
-    buildCommand: |
-      # Instalar dependencias de PHP
-      composer install --no-dev --optimize-autoloader --no-interaction
-      
-      # Instalar dependencias de Node.js
-      npm install
-      npm run build
-      
-      # Configuración de caché
-      php artisan config:cache
-      php artisan route:cache
-      php artisan view:cache
-    startCommand: "php artisan serve --host=0.0.0.0 --port=${PORT}"
+    dockerContext: .
+    dockerfile: Dockerfile
     envVars:
       - key: APP_ENV
         value: production
@@ -45,15 +34,9 @@ services:
         fromDatabase:
           name: auditarest-db
           property: password
-      - key: LOG_CHANNEL
-        value: stderr
-      - key: LOG_LEVEL
-        value: debug
 
 databases:
   - name: auditarest-db
     databaseName: auditarest
     user: auditarest_user
     plan: free
-    engine: postgres
-    version: "14"
