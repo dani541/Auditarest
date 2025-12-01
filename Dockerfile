@@ -1,8 +1,22 @@
+# ---------- STAGE 1: Composer ----------
+FROM composer:2 AS composer_stage
+
+WORKDIR /app
+
+# Copiar composer.json y composer.lock
+COPY composer.json composer.lock ./
+
+# Instalar dependencias PHP sin scripts
+RUN composer install --no-dev --no-interaction --prefer-dist --no-scripts
+
+# ---------- STAGE 2: PHP + Apache ----------
 FROM php:8.2-apache
 
+ENV COMPOSER_ALLOW_SUPERUSER=1
+ENV COMPOSER_MEMORY_LIMIT=-1
 WORKDIR /var/www/html
 
-# Sistema y extensiones PHP
+# --- Sistema y extensiones PHP ---
 RUN apt-get update && apt-get install -y \
     git unzip curl zip gnupg2 ca-certificates lsb-release \
     libpng-dev libjpeg62-turbo-dev libfreetype6-dev \
@@ -11,34 +25,34 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install -j$(nproc) pdo pdo_pgsql mbstring xml gd zip exif fileinfo \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-interaction --prefer-dist --no-scripts
+# --- Apache mod_rewrite ---
+RUN a2enmod rewrite
 
-# Copiar proyecto
+# --- Configurar Apache para Laravel public ---
+COPY ./docker/000-default.conf /etc/apache2/sites-available/000-default.conf
+
+# --- Copiar proyecto ---
 COPY . .
 
-# Apache mod_rewrite y DocumentRoot
-RUN a2enmod rewrite
-RUN echo '<VirtualHost *:80>
-    DocumentRoot /var/www/html/public
-    <Directory /var/www/html/public>
-        Options Indexes FollowSymLinks
-        AllowOverride All
-        Require all granted
-    </Directory>
-</VirtualHost>' > /etc/apache2/sites-available/000-default.conf
+# --- Copiar vendor del stage Composer ---
+COPY --from=composer_stage /app/vendor ./vendor
 
-# Node / frontend build
+# --- NodeJS 18 + npm ---
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
     && apt-get install -y nodejs \
-    && npm install --production --silent --no-progress \
-    && npx vite build || echo "Advertencia: build frontend falló"
+    && node -v \
+    && npm -v
 
-# Permisos Laravel
-RUN chown -R www-data:www-data storage bootstrap/cache public \
+# --- Build frontend usando npx ---
+ENV CI=true
+RUN npm install --production --silent --no-progress \
+    && npx vite build || echo "Advertencia: build frontend falló, backend funciona"
+
+# --- Permisos Laravel ---
+RUN mkdir -p storage bootstrap/cache public \
+    && chown -R www-data:www-data storage bootstrap/cache public \
     && chmod -R 775 storage bootstrap/cache public
 
+# --- Exponer puerto ---
 EXPOSE 80
 CMD ["apache2-foreground"]
