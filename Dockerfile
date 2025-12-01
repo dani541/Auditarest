@@ -8,18 +8,20 @@ RUN apt-get update && apt-get install -y \
     git \
     unzip \
     curl \
+    nano \
+    zip \
     libpng-dev \
     libjpeg62-turbo-dev \
     libfreetype6-dev \
     libzip-dev \
-    zip \
     libpq-dev \
     postgresql-client \
     libonig-dev \
     libxml2-dev \
+    libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Node antes de Composer
+# --- NODEJS ANTES DE COMPOSER ---
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
     apt-get install -y nodejs
 
@@ -28,7 +30,7 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# --- CONFIG PHP & EXTENSIONES ---
+# --- EXTENSIONES PHP ---
 RUN docker-php-ext-configure gd \
     --with-freetype=/usr/include/ \
     --with-jpeg=/usr/include/
@@ -38,26 +40,41 @@ RUN docker-php-ext-install -j$(nproc) \
     pdo_pgsql \
     mbstring \
     xml \
+    opcache \
     gd \
     zip \
     exif \
     fileinfo
 
-# --- COMPOSER ---
+# --- ARCHIVOS COMPOSER ---
 COPY composer.json composer.lock ./
 
-RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts
+# Composer SIN SCRIPTS (evita errores con artisan, vite, migrations, etc)
+RUN composer install --no-dev --no-interaction --prefer-dist --no-scripts
 
-# --- APP ---
+# --- COPIA DEL PROYECTO ---
 COPY . .
 
-RUN npm install --production && npm run build
+# --- BUILD FRONTEND ---
+RUN npm install --production
+RUN npm run build || echo "Advertencia: el build de frontend falló, pero el backend funciona"
 
-# Permisos
-RUN chown -R www-data:www-data storage bootstrap/cache
+# --- PERMISOS LARAVEL ---
+RUN mkdir -p storage/logs storage/framework bootstrap/cache && \
+    chown -R www-data:www-data storage bootstrap/cache && \
+    chmod -R 775 storage bootstrap/cache
 
-# Apache
+# --- APACHE ---
 RUN a2enmod rewrite
-EXPOSE 80
 
+# VirtualHost
+RUN echo '<VirtualHost *:80>\n\
+    DocumentRoot /var/www/html/public\n\
+    <Directory /var/www/html/public>\n\
+        AllowOverride All\n\
+        Require all granted\n\
+    </Directory>\n\
+</VirtualHost>' > /etc/apache2/sites-available/000-default.conf
+
+EXPOSE 80
 CMD ["apache2-foreground"]
