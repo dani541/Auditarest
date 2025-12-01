@@ -5,16 +5,49 @@ FROM php:8.1-apache
 ENV COMPOSER_MEMORY_LIMIT=-1
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
-# Instala dependencias del sistema
+# Instala dependencias básicas del sistema
 RUN apt-get update && apt-get install -y \
     git \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Instala Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Configura el directorio de trabajo
+WORKDIR /var/www/html
+
+# Copia solo los archivos necesarios primero para mejor caché
+COPY composer.json composer.lock ./
+
+# Configuración de PHP para mayor rendimiento
+RUN { \
+    echo 'memory_limit = -1'; \
+    echo 'max_execution_time = 300'; \
+    echo 'max_input_time = 300'; \
+} > /usr/local/etc/php/conf.d/memory.ini
+
+# Instala dependencias de PHP con múltiples reintentos
+RUN composer install --no-dev --no-interaction --optimize-autoloader --no-scripts --no-progress --prefer-dist || \
+    (echo "Primer intento fallido, limpiando y reintentando..." && \
+     rm -rf vendor/* && \
+     composer clear-cache && \
+     composer install --no-dev --no-interaction --optimize-autoloader --no-scripts --no-progress --prefer-dist)
+
+# Verifica si la instalación fue exitosa
+RUN [ -f "vendor/autoload.php" ] || { echo "Error: La instalación de dependencias falló"; exit 1; }
+
+# Copia el resto de los archivos
+COPY . .
+
+# Instala dependencias del sistema para Node.js y extensiones PHP
+RUN apt-get update && apt-get install -y \
     curl \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
     libzip-dev \
     zip \
-    unzip \
     libpq-dev \
     postgresql-client \
     libonig-dev \
@@ -34,26 +67,7 @@ RUN docker-php-ext-install -j$(nproc) \
     fileinfo \
     tokenizer
 
-# Habilita mod_rewrite
-RUN a2enmod rewrite
-
-# Instala Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# Configura el directorio de trabajo
-WORKDIR /var/www/html
-
-# Copia solo los archivos necesarios primero para mejor caché
-COPY composer.json composer.lock ./
-
-# Instala dependencias de PHP con reintento
-RUN composer install --no-dev --no-interaction --optimize-autoloader --no-scripts || \
-    (rm -rf vendor/* && composer install --no-dev --no-interaction --optimize-autoloader --no-scripts)
-
-# Copia el resto de los archivos
-COPY . .
-
-# Instala dependencias de Node.js
+# Instala Node.js y dependencias de frontend
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
     apt-get install -y nodejs && \
     npm install --production && \
@@ -63,6 +77,9 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
 RUN chown -R www-data:www-data /var/www/html/storage && \
     chmod -R 775 /var/www/html/storage && \
     chmod -R 775 /var/www/html/bootstrap/cache
+
+# Habilita mod_rewrite
+RUN a2enmod rewrite
 
 # Configuración de Apache
 RUN echo '<VirtualHost *:80>\n\
