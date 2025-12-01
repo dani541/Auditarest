@@ -7,8 +7,7 @@ ENV COMPOSER_ALLOW_SUPERUSER=1
 
 # --- FASE 1: Instalación de Dependencias del Sistema y Herramientas ---
 
-# Instala dependencias del sistema y librerías necesarias para las extensiones PHP
-# Se incluyen las librerías para GD, PostgreSQL, XML, y mbstring
+# Instala librerías de sistema necesarias para las extensiones de PHP (GD, Zip, PgSQL, Mbstring)
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
@@ -22,6 +21,7 @@ RUN apt-get update && apt-get install -y \
     postgresql-client \
     libonig-dev \
     libxml2-dev \
+    # Limpieza de cache de apt para reducir el tamaño de la imagen
     && rm -rf /var/lib/apt/lists/*
 
 # Instala Composer
@@ -32,17 +32,17 @@ WORKDIR /var/www/html
 
 # --- FASE 2: Configuración de PHP y Extensiones ---
 
-# Configuración de PHP (Asegura límites altos para Composer)
+# Configuración de PHP (Asegura límites altos para instalaciones grandes)
 RUN { \
     echo 'memory_limit = -1'; \
     echo 'max_execution_time = 600'; \
     echo 'max_input_time = 600'; \
 } > /usr/local/etc/php/conf.d/memory.ini
 
-# Configura la extensión GD (¡Este paso es crucial y debe ir antes de instalar GD!)
+# Configura la extensión GD (¡CRUCIAL antes de instalarla!)
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg
 
-# Instala todas las extensiones PHP necesarias (GD, DB, utilidades)
+# Instala todas las extensiones PHP necesarias (pdo_pgsql, gd, zip, etc.)
 RUN docker-php-ext-install -j$(nproc) \
     pdo \
     pdo_pgsql \
@@ -59,7 +59,7 @@ RUN docker-php-ext-install -j$(nproc) \
 # Copia solo los archivos de dependencias para aprovechar la caché
 COPY composer.json composer.lock ./
 
-# Instala dependencias de PHP con reintento y opciones estándar
+# Instala dependencias de PHP con reintento si falla (ahora debería funcionar)
 RUN composer install --no-dev --no-interaction --optimize-autoloader --prefer-dist || \
     (echo "Primer intento fallido, limpiando y reintentando..." && \
      rm -rf vendor/* && \
@@ -77,17 +77,18 @@ COPY . .
 # Instala Node.js (v18 LTS) y ejecuta la compilación del frontend
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
     apt-get install -y nodejs && \
+    # Instala y compila el frontend (ajusta npm run build si usas un script diferente)
     npm install --production && \
     npm run build
 
 # --- FASE 5: Permisos y Configuración de Apache ---
 
-# Configura los permisos para directorios de caché/storage (típico de Laravel)
+# Configura los permisos para directorios de almacenamiento/cache (ej. Laravel, Symfony)
 RUN chown -R www-data:www-data /var/www/html/storage && \
     chmod -R 775 /var/www/html/storage && \
     chmod -R 775 /var/www/html/bootstrap/cache
 
-# Habilita mod_rewrite (necesario para URLs limpias)
+# Habilita mod_rewrite (necesario para la mayoría de los frameworks)
 RUN a2enmod rewrite
 
 # Configuración de Apache para apuntar al directorio 'public'
@@ -120,5 +121,5 @@ RUN if [ -f "artisan" ]; then \
 # Expone el puerto 80
 EXPOSE 80
 
-# Comando de inicio
+# Comando de inicio del contenedor
 CMD ["apache2-foreground"]
