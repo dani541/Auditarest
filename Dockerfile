@@ -20,6 +20,29 @@ RUN docker-php-ext-install -j$(nproc) gd pdo pdo_pgsql zip exif
 # Habilita mod_rewrite
 RUN a2enmod rewrite
 
+# Crea directorio para configuración de Apache
+RUN mkdir -p /etc/apache2/sites-available/
+
+# Crea el archivo de configuración directamente
+RUN echo '<VirtualHost *:80>\n\
+    ServerAdmin webmaster@localhost\n\
+    DocumentRoot /var/www/html/public\n\
+    <Directory /var/www/html/public>\n\
+        Options Indexes FollowSymLinks\n\
+        AllowOverride All\n\
+        Require all granted\n\
+        FallbackResource /index.php\n\
+    </Directory>\n\
+    ErrorLog ${APACHE_LOG_DIR}/error.log\n\
+    CustomLog ${APACHE_LOG_DIR}/access.log combined\n\
+    <Directory /var/www/html/public>\n\
+        RewriteEngine On\n\
+        RewriteCond %{REQUEST_FILENAME} !-d\n\
+        RewriteCond %{REQUEST_FILENAME} !-f\n\
+        RewriteRule ^ index.php [L]\n\
+    </Directory>\n\
+</VirtualHost>' > /etc/apache2/sites-available/000-default.conf
+
 # Instala Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
@@ -46,9 +69,6 @@ COPY . .
 # Configura los permisos
 RUN chown -R www-data:www-data /var/www/html/storage
 RUN chmod -R 775 /var/www/html/storage
-
-# Configura Apache
-COPY docker/000-default.conf /etc/apache2/sites-available/000-default.conf
 
 # Expone el puerto 80
 EXPOSE 80
