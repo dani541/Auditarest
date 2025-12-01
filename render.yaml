@@ -2,6 +2,7 @@ services:
   - type: web
     name: auditarest
     env: php
+    region: oregon
     buildCommand: |
       composer install --no-dev --optimize-autoloader --no-interaction
       npm install
@@ -19,3 +20,32 @@ services:
         generateValue: true
       - key: APP_URL
         fromHost: true
+      - key: DB_CONNECTION
+        value: mysql
+      - key: DB_HOST
+        fromDatabase:
+          name: auditarest-db
+          property: hostname
+      - key: DB_PORT
+        value: '3306'
+      - key: DB_DATABASE
+        fromDatabase:
+          name: auditarest-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: auditarest-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: auditarest-db
+          property: password
+
+databases:
+  - name: auditarest-db
+    databaseName: auditarest
+    user: auditarest_user
+    plan: free
+    engine: mysql
+    version: "8.0"
+    region: oregon
