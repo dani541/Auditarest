@@ -8,12 +8,11 @@ WORKDIR /var/www/html
 RUN apt-get update && apt-get install -y \
     git unzip curl zip gnupg2 ca-certificates lsb-release \
     libpng-dev libjpeg62-turbo-dev libfreetype6-dev \
-    libzip-dev libonig-dev libxml2-dev libpq-dev postgresql-client \
+    libzip-dev libonig-dev libxml2-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
         pdo \
-        pdo_mysql \         # <-- AGREGADO para MySQL
-        pdo_pgsql \
+        pdo_mysql \
         mbstring \
         xml \
         gd \
