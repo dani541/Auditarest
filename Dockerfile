@@ -38,7 +38,6 @@ RUN docker-php-ext-install -j$(nproc) \
     pdo_pgsql \
     mbstring \
     xml \
-    dom \
     gd \
     zip \
     exif \
@@ -47,7 +46,7 @@ RUN docker-php-ext-install -j$(nproc) \
 # --- COMPOSER ---
 COPY composer.json composer.lock ./
 
-RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts
 
 # --- APP ---
 COPY . .
