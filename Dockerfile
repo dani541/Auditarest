@@ -5,14 +5,12 @@ ENV COMPOSER_MEMORY_LIMIT=-1
 WORKDIR /var/www/html
 
 # --- Sistema y extensiones PHP ---
-# MODIFICADO: Se añade 'libpq-dev' para PostgreSQL.
 RUN apt-get update && apt-get install -y \
     git unzip curl zip gnupg2 ca-certificates lsb-release \
     libpng-dev libjpeg62-turbo-dev libfreetype6-dev \
     libzip-dev libonig-dev libxml2-dev \
     libpq-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    # MODIFICADO: Se añade 'pdo_pgsql' para habilitar el driver de PostgreSQL.
     && docker-php-ext-install -j$(nproc) \
         pdo \
         pdo_mysql \
@@ -54,5 +52,7 @@ RUN mkdir -p storage bootstrap/cache public \
     && chmod -R 775 storage bootstrap/cache public
 
 EXPOSE 80
-CMD ["apache2-foreground"]
-CMD php artisan migrate --force && apache2-foreground
+
+# --- Ejecutar migraciones y arrancar Apache ---
+CMD ["sh", "-c", "php artisan migrate --force && apache2-foreground"]
+
