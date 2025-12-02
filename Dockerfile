@@ -29,7 +29,7 @@ RUN composer install --no-dev --no-interaction --prefer-dist --no-scripts
 # --- Copiar proyecto ---
 COPY . .
 
-# --- Apache mod_rewrite y configuración DocumentRoot ---
+# --- Apache mod_rewrite ---
 RUN a2enmod rewrite
 COPY docker/000-default.conf /etc/apache2/sites-available/000-default.conf
 
@@ -39,15 +39,18 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
     && node -v \
     && npm -v
 
-# --- Build frontend usando Vite ---
+# --- Build frontend (Vite) ---
 ENV CI=true
 RUN npm install --production --silent --no-progress \
-    && npx vite build || echo "Advertencia: build frontend falló, backend funciona"
+    && npx vite build || echo "⚠️ Advertencia: el build frontend falló, backend OK"
 
-# --- Permisos Laravel ---
-RUN mkdir -p storage bootstrap/cache public \
-    && chown -R www-data:www-data storage bootstrap/cache public \
-    && chmod -R 775 storage bootstrap/cache public
+# ─────────────────────────────────────────────
+# ✅ PERMISOS CORRECTOS PARA LARAVEL (storage / cache)
+# ─────────────────────────────────────────────
+RUN mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache \
+    && mkdir -p bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
 
 # --- EntryPoint para migraciones y seeders ---
 COPY docker/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
