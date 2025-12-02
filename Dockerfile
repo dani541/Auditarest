@@ -55,4 +55,4 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 EXPOSE 80
 
-CMD ["docker-entrypoint.sh"]
+CMD ["sh", "-c", "php artisan migrate --force && (php artisan db:seed --class=RoleSeeder || true) && (php artisan db:seed --class=UserSeeder || true) && apache2-foreground"]
