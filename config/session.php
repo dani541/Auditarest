@@ -4,6 +4,9 @@ use Illuminate\Support\Str;
 
 return [
 
+
+    'secure' => env('SESSION_SECURE_COOKIE', true),
+
     /*
     |--------------------------------------------------------------------------
     | Default Session Driver
@@ -214,4 +217,6 @@ return [
 
     'partitioned' => env('SESSION_PARTITIONED_COOKIE', false),
 
+
+    'http_only' => true,
 ];
