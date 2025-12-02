@@ -17,15 +17,13 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Bootstrap any application services.
      */
-    public function boot()
-    {
-        if ($this->app->environment('production')) {
-            \URL::forceScheme('https');
-            \URL::forceRootUrl(config('app.url'));
-            
-            // Ensure secure cookies
-            config(['session.secure' => true]);
-            config(['session.same_site' => 'lax']);
-        }
+   public function boot()
+{
+    if ($this->app->environment('production')) {
+        \URL::forceScheme('https');
+        \URL::forceRootUrl(config('app.url'));
+        config(['session.secure' => true]);
+        config(['session.same_site' => 'lax']);
     }
+}
 }
