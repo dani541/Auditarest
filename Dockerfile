@@ -55,3 +55,4 @@ RUN mkdir -p storage bootstrap/cache public \
 
 EXPOSE 80
 CMD ["apache2-foreground"]
+CMD php artisan migrate --force && apache2-foreground
