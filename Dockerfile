@@ -39,7 +39,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
     && node -v \
     && npm -v
 
-# --- Build frontend usando npx (Vite) ---
+# --- Build frontend usando Vite ---
 ENV CI=true
 RUN npm install --production --silent --no-progress \
     && npx vite build || echo "Advertencia: build frontend falló, backend funciona"
@@ -51,7 +51,6 @@ RUN mkdir -p storage bootstrap/cache public \
 
 # --- EntryPoint para migraciones y seeders ---
 COPY docker/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 EXPOSE 80
