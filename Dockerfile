@@ -49,7 +49,10 @@ RUN mkdir -p storage bootstrap/cache public \
     && chown -R www-data:www-data storage bootstrap/cache public \
     && chmod -R 775 storage bootstrap/cache public
 
+# --- EntryPoint para migraciones y seeders ---
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 EXPOSE 80
 
-
-CMD ["sh", "-c", "php artisan migrate:fresh --force && php artisan db:seed --class=RoleSeeder && php artisan db:seed --class=UserSeeder && apache2-foreground"]
+CMD ["docker-entrypoint.sh"]
