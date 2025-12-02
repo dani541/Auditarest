@@ -17,9 +17,9 @@ return [
         Str::slug(env('APP_NAME', 'laravel'), '_').'_session'
     ),
     'path' => '/',
-    'domain' => env('SESSION_DOMAIN', null),
-    'secure' => env('SESSION_SECURE_COOKIE', true),
+    'domain' => env('SESSION_DOMAIN', '.auditarest.onrender.com'), // Changed this line
+    'secure' => true, // Changed from env to hardcoded true
     'http_only' => true,
-    'same_site' => env('SESSION_SAME_SITE', 'lax'),
+    'same_site' => 'lax', // Changed from env to hardcoded
     'partitioned' => false,
 ];
