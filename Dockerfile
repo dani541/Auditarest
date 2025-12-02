@@ -50,7 +50,8 @@ RUN mkdir -p storage bootstrap/cache public \
     && chmod -R 775 storage bootstrap/cache public
 
 # --- EntryPoint para migraciones y seeders ---
-COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY docker/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 EXPOSE 80
