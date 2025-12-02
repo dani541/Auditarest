@@ -52,5 +52,4 @@ RUN mkdir -p storage bootstrap/cache public \
 EXPOSE 80
 
 
-CMD ["sh", "-c", "php artisan migrate:fresh --force && apache2-foreground"]
-
+CMD ["sh", "-c", "php artisan migrate:fresh --force && php artisan db:seed --class=RoleSeeder && php artisan db:seed --class=UserSeeder && apache2-foreground"]
