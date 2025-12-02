@@ -51,7 +51,6 @@ RUN mkdir -p storage bootstrap/cache public \
 
 EXPOSE 80
 
-# --- Ejecutar migraciones y arrancar Apache ---
-# Se usa migrate:fresh para asegurar que todas las tablas se creen correctamente
+
 CMD ["sh", "-c", "php artisan migrate:fresh --force && apache2-foreground"]
 
