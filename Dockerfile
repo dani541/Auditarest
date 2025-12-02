@@ -8,12 +8,10 @@ WORKDIR /var/www/html
 RUN apt-get update && apt-get install -y \
     git unzip curl zip gnupg2 ca-certificates lsb-release \
     libpng-dev libjpeg62-turbo-dev libfreetype6-dev \
-    libzip-dev libonig-dev libxml2-dev \
-    libpq-dev \
+    libzip-dev libonig-dev libxml2-dev libpq-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
         pdo \
-        pdo_mysql \
         pdo_pgsql \
         mbstring \
         xml \
@@ -41,7 +39,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
     && node -v \
     && npm -v
 
-# --- Build frontend usando npx ---
+# --- Build frontend usando npx (Vite) ---
 ENV CI=true
 RUN npm install --production --silent --no-progress \
     && npx vite build || echo "Advertencia: build frontend falló, backend funciona"
@@ -54,5 +52,6 @@ RUN mkdir -p storage bootstrap/cache public \
 EXPOSE 80
 
 # --- Ejecutar migraciones y arrancar Apache ---
-CMD ["sh", "-c", "php artisan migrate --force && apache2-foreground"]
+# Se usa migrate:fresh para asegurar que todas las tablas se creen correctamente
+CMD ["sh", "-c", "php artisan migrate:fresh --force && apache2-foreground"]
 
