@@ -3,12 +3,12 @@
 use Illuminate\Support\Str;
 
 return [
-    'driver' => env('SESSION_DRIVER', 'file'),
+    'driver' => env('SESSION_DRIVER', 'database'),
     'lifetime' => env('SESSION_LIFETIME', 120),
     'expire_on_close' => false,
     'encrypt' => false,
     'files' => storage_path('framework/sessions'),
-    'connection' => env('SESSION_CONNECTION'),
+'connection' => env('SESSION_CONNECTION', 'pgsql'),
     'table' => 'sessions',
     'store' => env('SESSION_STORE'),
     'lottery' => [2, 100],
@@ -22,4 +22,5 @@ return [
     'http_only' => true,
     'same_site' => 'lax', // Changed from env to hardcoded
     'partitioned' => false,
+    'domain' => '.auditarest.onrender.com',
 ];
