@@ -40,16 +40,15 @@ class ReportController extends Controller
             
         \Log::info('Meses disponibles en la base de datos:', $availableMonths->toArray());
         
-        $auditsByMonth = \App\Models\Audit::select(
-                DB::raw('MONTH(created_at) as month'),
-                DB::raw('YEAR(created_at) as year'),
-                DB::raw('COUNT(*) as count')
-            )
-            ->where('created_at', '>=', $sixMonthsAgo)
-            ->groupBy('year', 'month')
-            ->orderBy('year', 'asc')
-            ->orderBy('month', 'asc')
-            ->get();
+        $availableMonths = \App\Models\Audit::select(
+            DB::raw('DISTINCT EXTRACT(YEAR FROM created_at) AS year'),
+            DB::raw('EXTRACT(MONTH FROM created_at) AS month'),
+            DB::raw("TO_CHAR(MIN(created_at), 'YYYY-MM') AS month_str")
+        )
+        ->groupBy('year', 'month')
+        ->orderBy('year', 'asc')
+        ->orderBy('month', 'asc')
+        ->get();
             
         \Log::info('Resultado de la consulta por mes:', $auditsByMonth->toArray());
             
