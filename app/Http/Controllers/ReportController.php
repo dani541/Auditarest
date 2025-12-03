@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Audit;
+use App\Models\AuditInfrastructure;
+use App\Models\AuditMachinery;
+use App\Models\AuditHygiene;
 use App\Models\Restaurant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -10,90 +13,52 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReportController extends Controller
 {
-
     public function index()
     {
-        // Get total number of audits
-        $totalAudits = \App\Models\Audit::count();
-        
-        // Get audits by month for the last 6 months
+        // Total de auditorías
+        $totalAudits = Audit::count();
+
+        // Últimos 6 meses
         $sixMonthsAgo = now()->subMonths(5)->startOfMonth();
-        
-        // Log para depuración
-        \Log::info('Fechas de consulta:', [
-            'fecha_actual' => now()->toDateTimeString(),
-            'seis_meses_atras' => $sixMonthsAgo->toDateTimeString(),
-            'mes_actual' => now()->format('Y-m'),
-            'mes_anterior' => now()->subMonth()->format('Y-m')
-        ]);
-        
-        // Obtener todos los meses disponibles en la base de datos para depuración
-        $availableMonths = \App\Models\Audit::select(
-                DB::raw('DISTINCT YEAR(created_at) as year'),
-                DB::raw('MONTH(created_at) as month'),
-                DB::raw('DATE_FORMAT(MIN(created_at), "%Y-%m") as month_str')
+
+        // Auditorías por mes (PostgreSQL)
+        $auditsByMonth = Audit::select(
+                DB::raw('EXTRACT(MONTH FROM created_at) AS month'),
+                DB::raw('EXTRACT(YEAR FROM created_at) AS year'),
+                DB::raw('COUNT(*) AS count')
             )
+            ->where('created_at', '>=', $sixMonthsAgo)
             ->groupBy('year', 'month')
-            ->orderBy('year', 'asc')
-            ->orderBy('month', 'asc')
+            ->orderBy('year')
+            ->orderBy('month')
             ->get();
-            
-        \Log::info('Meses disponibles en la base de datos:', $availableMonths->toArray());
-        
-        $availableMonths = \App\Models\Audit::select(
-            DB::raw('DISTINCT EXTRACT(YEAR FROM created_at) AS year'),
-            DB::raw('EXTRACT(MONTH FROM created_at) AS month'),
-            DB::raw("TO_CHAR(MIN(created_at), 'YYYY-MM') AS month_str")
-        )
-        ->groupBy('year', 'month')
-        ->orderBy('year', 'asc')
-        ->orderBy('month', 'asc')
-        ->get();
-            
-        \Log::info('Resultado de la consulta por mes:', $auditsByMonth->toArray());
-            
-        // Format the data for the chart
+
+        // Formatear datos para el gráfico
         $monthlyData = [];
         $monthNames = [];
-        
-        // Obtener el rango de los últimos 6 meses
-        $endDate = now()->endOfMonth();
         $startDate = now()->subMonths(5)->startOfMonth();
-        
-        // Log para depuración
-        \Log::info('Rango de fechas para el gráfico:', [
-            'inicio' => $startDate->toDateString(),
-            'fin' => $endDate->toDateString()
-        ]);
-        
-        // Crear un array con todos los meses en el rango
+        $endDate = now()->endOfMonth();
+
         $period = new \DatePeriod(
             $startDate,
             new \DateInterval('P1M'),
-            $endDate
+            $endDate->modify('+1 day') // para incluir el último mes
         );
-        
+
         foreach ($period as $date) {
             $month = (int)$date->format('n');
             $year = (int)$date->format('Y');
             $monthNames[] = $date->format('M');
-            
-            // Buscar si hay datos para este mes
+
             $auditCount = $auditsByMonth->first(function($item) use ($month, $year) {
                 return (int)$item->month === $month && (int)$item->year === $year;
             });
-            
+
             $monthlyData[] = $auditCount ? $auditCount->count : 0;
-            
-            // Log para depuración
-            \Log::info("Procesando mes: {$date->format('Y-m')}", [
-                'encontrado' => $auditCount ? 'Sí' : 'No',
-                'conteo' => $auditCount ? $auditCount->count : 0
-            ]);
         }
-        
-        // Get recent audits
-        $recentAudits = \App\Models\Audit::with('restaurant')
+
+        // Últimas 5 auditorías
+        $recentAudits = Audit::with('restaurant')
             ->latest()
             ->take(5)
             ->get()
@@ -104,96 +69,50 @@ class ReportController extends Controller
                     'score' => $audit->total_score ?? 0
                 ];
             });
-        
-        // Get average scores for each category with fallback to demo data if no records exist
+
+        // Promedio por categoría
         $avgScores = [];
-        
-        // Check if we have any data in the tables
-        $hasInfrastructure = \App\Models\AuditInfrastructure::exists();
-        $hasMachinery = \App\Models\AuditMachinery::exists();
-        $hasHygiene = \App\Models\AuditHygiene::exists();
-        
-        // If no data exists, use demo data
+
+        $hasInfrastructure = AuditInfrastructure::exists();
+        $hasMachinery = AuditMachinery::exists();
+        $hasHygiene = AuditHygiene::exists();
+
         $useDemoData = !($hasInfrastructure || $hasMachinery || $hasHygiene);
-        
+
         if ($useDemoData) {
             $avgScores = [
-                'infraestructura' => [
-                    'score' => rand(70, 95),
-                    'color' => 'rgba(54, 162, 235, 0.6)',
-                    'borderColor' => 'rgba(54, 162, 235, 1)'
-                ],
-                'maquinaria' => [
-                    'score' => rand(60, 90),
-                    'color' => 'rgba(255, 99, 132, 0.6)',
-                    'borderColor' => 'rgba(255, 99, 132, 1)'
-                ],
-                'higiene' => [
-                    'score' => rand(80, 98),
-                    'color' => 'rgba(75, 192, 192, 0.6)',
-                    'borderColor' => 'rgba(75, 192, 192, 1)'
-                ]
+                'infraestructura' => ['score' => rand(70, 95), 'color' => 'rgba(54, 162, 235, 0.6)', 'borderColor' => 'rgba(54, 162, 235, 1)'],
+                'maquinaria' => ['score' => rand(60, 90), 'color' => 'rgba(255, 99, 132, 0.6)', 'borderColor' => 'rgba(255, 99, 132, 1)'],
+                'higiene' => ['score' => rand(80, 98), 'color' => 'rgba(75, 192, 192, 0.6)', 'borderColor' => 'rgba(75, 192, 192, 1)']
             ];
         } else {
-            // Use real data
             $avgScores = [
-                'infraestructura' => [
-                    'score' => $hasInfrastructure ? (float)number_format(\App\Models\AuditInfrastructure::avg('percentage'), 2) : 0,
-                    'color' => 'rgba(54, 162, 235, 0.6)',
-                    'borderColor' => 'rgba(54, 162, 235, 1)'
-                ],
-                'maquinaria' => [
-                    'score' => $hasMachinery ? (float)number_format(\App\Models\AuditMachinery::avg('percentage'), 2) : 0,
-                    'color' => 'rgba(255, 99, 132, 0.6)',
-                    'borderColor' => 'rgba(255, 99, 132, 1)'
-                ],
-                'higiene' => [
-                    'score' => $hasHygiene ? (float)number_format(\App\Models\AuditHygiene::avg('percentage'), 2) : 0,
-                    'color' => 'rgba(75, 192, 192, 0.6)',
-                    'borderColor' => 'rgba(75, 192, 192, 1)'
-                ]
+                'infraestructura' => ['score' => (float)number_format(AuditInfrastructure::avg('percentage'), 2), 'color' => 'rgba(54, 162, 235, 0.6)', 'borderColor' => 'rgba(54, 162, 235, 1)'],
+                'maquinaria' => ['score' => (float)number_format(AuditMachinery::avg('percentage'), 2), 'color' => 'rgba(255, 99, 132, 0.6)', 'borderColor' => 'rgba(255, 99, 132, 1)'],
+                'higiene' => ['score' => (float)number_format(AuditHygiene::avg('percentage'), 2), 'color' => 'rgba(75, 192, 192, 0.6)', 'borderColor' => 'rgba(75, 192, 192, 1)']
             ];
         }
-        
-        // Log the data being sent to the view
-        \Log::info('Chart Data:', [
-            'avgScores' => $avgScores,
-            'hasData' => !$useDemoData ? 'Real Data' : 'Demo Data'
-        ]);
-        
-        // Prepare data for the chart
+
         $radarLabels = array_map('ucfirst', array_keys($avgScores));
-        $radarData = array_map(function($item) {
-            return (float)$item['score'];
-        }, $avgScores);
-        
+        $radarData = array_map(fn($item) => (float)$item['score'], $avgScores);
         $radarBackgroundColors = array_column($avgScores, 'color');
         $radarBorderColors = array_column($avgScores, 'borderColor');
-        
-        return view('admin.reports.index', [
-            'totalAudits' => $totalAudits,
-            'monthlyData' => $monthlyData,
-            'monthNames' => $monthNames,
-            'recentAudits' => $recentAudits,
-            'radarLabels' => $radarLabels,
-            'radarData' => $radarData,
-            'radarBackgroundColors' => $radarBackgroundColors,
-            'radarBorderColors' => $radarBorderColors,
-            'avgScores' => $avgScores,
-            'isDemoData' => $useDemoData
-        ]);
-    }
 
+        return view('admin.reports.index', compact(
+            'totalAudits', 'monthlyData', 'monthNames',
+            'recentAudits', 'radarLabels', 'radarData',
+            'radarBackgroundColors', 'radarBorderColors',
+            'avgScores', 'useDemoData'
+        ));
+    }
 
     public function auditsByRestaurant(Request $request)
     {
         $restaurants = Restaurant::withCount('audits')
-            ->with(['audits' => function($query) {
-                $query->latest()->take(5);
-            }])
+            ->with(['audits' => fn($q) => $q->latest()->take(5)])
             ->get();
 
-        if ($request->has('export') && $request->export == 'pdf') {
+        if ($request->export === 'pdf') {
             $pdf = PDF::loadView('admin.reports.pdf.audits-by-restaurant', compact('restaurants'));
             return $pdf->download('informe-auditorias-por-restaurante.pdf');
         }
