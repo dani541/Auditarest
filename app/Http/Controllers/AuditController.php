@@ -419,7 +419,7 @@ public function show($id)
 
     return view('admin.audits.show', compact('audit'));
 } */
-
+/*
     public function show($id)
 {
     $audit = Audit::with([
@@ -442,7 +442,41 @@ public function show($id)
    // }
 
     return view('admin.audits.show', compact('audit'));
+}*/
+
+public function show($id)
+{
+    $audit = Audit::with([
+        'restaurant',
+        'infrastructure',
+        'machinery',
+        'hygiene'
+    ])->findOrFail($id);
+
+    // Asegurar que las relaciones tengan valores por defecto si son nulas
+    if (!$audit->infrastructure) {
+        $audit->setRelation('infrastructure', new \App\Models\AuditInfrastructure([
+            'additional_notes' => 'No hay observaciones disponibles'
+        ]));
+    }
+
+    if (!$audit->machinery) {
+        $audit->setRelation('machinery', new \App\Models\AuditMachinery([
+            'maintenance_notes' => 'No hay notas de mantenimiento disponibles',
+            'additional_notes' => 'No hay observaciones adicionales disponibles'
+        ]));
+    }
+
+    if (!$audit->hygiene) {
+        $audit->setRelation('hygiene', new \App\Models\AuditHygiene([
+            'additional_notes' => 'No hay observaciones de higiene disponibles'
+        ]));
+    }
+
+    return view('admin.audits.show', compact('audit'));
 }
+
+
     /**
      * Exporta una auditoría a PDF
      */
