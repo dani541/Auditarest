@@ -6,9 +6,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3">Auditoría #{{ $audit->id }}</h1>
         <div>
-            <a href="{{ route('admin.audits.index') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left"></i> Volver
-            </a>
+
             <a href="{{ route('audits.export-pdf', $audit->id) }}" class="btn btn-primary">
                 <i class="fas fa-file-pdf"></i> Exportar PDF
             </a>
