@@ -6,7 +6,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3">Auditoría #{{ $audit->id }}</h1>
         <div>
-            <a href="{{ route('audits.index') }}" class="btn btn-outline-secondary">
+            <a href="{{ route('admin.audits.index') }}" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left"></i> Volver
             </a>
             <a href="{{ route('audits.export-pdf', $audit->id) }}" class="btn btn-primary">
@@ -72,10 +72,12 @@
                 'exclude' => ['id', 'audit_id', 'created_at', 'updated_at', 'deleted_at', 'total_score', 'percentage']
             ])
             
-            @if(!empty($audit->infrastructure->additional_notes))
+            @if(!empty(trim($audit->infrastructure->additional_notes ?? '')))
             <div class="mt-3 pt-3 border-top">
                 <h6 class="text-muted"><i class="fas fa-clipboard me-2"></i>Observaciones Adicionales</h6>
-                <p class="mb-0">{{ $audit->infrastructure->additional_notes }}</p>
+                <div class="bg-light p-3 rounded">
+                    {!! nl2br(e($audit->infrastructure->additional_notes)) !!}
+                </div>
             </div>
             @endif
         </div>
@@ -99,13 +101,18 @@
                 'exclude' => ['id', 'audit_id', 'created_at', 'updated_at', 'deleted_at', 'total_score', 'percentage', 'maintenance_notes', 'last_maintenance_date']
             ])
             
-            @if(!empty($audit->machinery->maintenance_notes))
+            @if(!empty(trim($audit->machinery->maintenance_notes ?? '')) || !empty($audit->machinery->last_maintenance_date))
             <div class="mt-3 pt-3 border-top">
+                @if(!empty(trim($audit->machinery->maintenance_notes ?? '')))
                 <h6 class="text-muted"><i class="fas fa-clipboard me-2"></i>Notas de Mantenimiento</h6>
-                <p class="mb-0">{{ $audit->machinery->maintenance_notes }}</p>
+                <div class="bg-light p-3 rounded mb-3">
+                    {!! nl2br(e($audit->machinery->maintenance_notes)) !!}
+                </div>
+                @endif
+                
                 @if(!empty($audit->machinery->last_maintenance_date))
-                <p class="text-muted mt-2 mb-0">
-                    <small>Último mantenimiento: {{ \Carbon\Carbon::parse($audit->machinery->last_maintenance_date)->format('d/m/Y') }}</small>
+                <p class="text-muted mb-0">
+                    <i class="far fa-calendar-alt me-2"></i>Último mantenimiento: {{ \Carbon\Carbon::parse($audit->machinery->last_maintenance_date)->format('d/m/Y') }}
                 </p>
                 @endif
             </div>
